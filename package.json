@@ -1,0 +1,23 @@
+{
+  "name": "parser-js",
+  "version": "1.0.0",
+  "description": "A simple JavaScript brute-force parser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidbarone/parser-js.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "parser"
+  ],
+  "author": "david barone",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidbarone/parser-js/issues"
+  },
+  "homepage": "https://github.com/davidbarone/parser-js#readme"
+}
