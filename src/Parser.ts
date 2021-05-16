@@ -6,7 +6,7 @@ export class Parser {
     ProductionRules: ProductionRule[];
     IgnoreTokens: string[];
 
-    get BNFGrammar(): ProductionRule[] {
+    private get BNFGrammar(): ProductionRule[] {
         return [
             // Lexer Rules
             new ProductionRule("COMMENT", "\/\*.*\*\/"),           // comments 
@@ -36,6 +36,10 @@ export class Parser {
             new ProductionRule("rule", "RULE:IDENTIFIER", "EQ!", "EXPANSION:parserSymbolsExpr", "SEMICOLON!"),  // Parser rule
             new ProductionRule("grammar", "RULES:rule+")
         ];
+    }
+
+    private get BNFVisitor(): Visitor {
+        
     }
 
     
