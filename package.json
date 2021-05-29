@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "compile": "tsc",
-    "test": "jest"
+    "test": "jest --collectCoverage"
   },
   "repository": {
     "type": "git",
