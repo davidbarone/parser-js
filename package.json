@@ -4,6 +4,8 @@
   "description": "A simple JavaScript brute-force parser",
   "main": "index.js",
   "scripts": {
+    "build": "webpack --mode production",
+    "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

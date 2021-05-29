@@ -3,6 +3,7 @@ import { Dictionary } from "./Dictionary"
 
 export class Node {
     Name: string;
+    Properties: Dictionary<object>;
 
     constructor(name: string) {
         this.Name = name;
@@ -12,6 +13,4 @@ export class Node {
     Accept(v: Visitor) {
         v.Visit(this);
     }
-
-    Properties: Dictionary<object>;
 }

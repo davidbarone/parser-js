@@ -2,24 +2,22 @@ import { ProductionRule } from "./ProductionRule"
 import { Token } from "./Token"
 import { Stack } from "./Stack"
 import { Node } from "./Node"
+import "./Extensions"
 
-export class ParserContext
-    {
+export class ParserContext {
     ProductionRules: ProductionRule[];
     CurrentProductionRule: Stack<ProductionRule>;
     Tokens: Token[];
     Results: Stack<object>;
     CurrentTokenIndex: number;
 
-    constructor(productionRules: ProductionRule[], tokens: Token[])
-        {
-            this.ProductionRules = productionRules;
+    constructor(productionRules: ProductionRule[], tokens: Token[]) {
+        this.ProductionRules = productionRules;
         this.Tokens = [...tokens];
-            this.CurrentTokenIndex = 0;
-            this.Results = new Stack<object>();
-            this.CurrentProductionRule = new Stack<ProductionRule>();
-        }
-
+        this.CurrentTokenIndex = 0;
+        this.Results = new Stack<object>();
+        this.CurrentProductionRule = new Stack<ProductionRule>();
+    }
 
     PeekToken(): Token {
         if (this.CurrentTokenIndex >= this.Tokens.length)
@@ -35,19 +33,19 @@ export class ParserContext
         this.Results.push(value);
     }
 
-    PopResult(): object {
+    PopResult(): object | undefined {
         return this.Results.pop();
     }
 
-    PeekResult(): object{
+    PeekResult(): object | undefined {
         return this.Results.peek();
     }
 
     get TokenEOF(): boolean {
-        return this.CurrentTokenIndex >== this.Tokens.length;
+        return this.CurrentTokenIndex >= this.Tokens.length;
     }
 
-    TryToken(tokenName: string): Token{
+    TryToken(tokenName: string): Token | null {
         if (this.CurrentTokenIndex >= this.Tokens.length) {
             throw new Error("Unexpected EOF");
         }
@@ -67,15 +65,15 @@ export class ParserContext
             var result = this.Results.peek();
             var resultAsNode = result as Node;
 
-            var productionRule = this.CurrentProductionRule.peek();
+            var productionRule = this.CurrentProductionRule.peek() as ProductionRule;
             var isEnumerated = productionRule.IsEnumeratedSymbol(name);
 
             if (name) {
                 if (isEnumerated) {
-                    if (!resultAsNode.Properties.ContainsKey(name))
-                        resultAsNode.Properties[name] = new List<object>();
+                    if (!(name in resultAsNode.Properties))
+                        resultAsNode.Properties[name] = new Array<object>();
 
-                    resultAsNode.Properties[name] = resultAsNode.Properties[name].Union(value);
+                    resultAsNode.Properties[name] = resultAsNode.Properties[name].union(value);
                 }
                 else
                     resultAsNode.Properties[name] = value;
@@ -83,7 +81,7 @@ export class ParserContext
             else {
                 if (isEnumerated) {
                     var obj = this.Results.pop();
-                    this.Results.push(obj.Union(value));
+                    this.Results.push(obj.union(value));
                 }
                 else {
                     this.Results.pop();
@@ -91,9 +89,5 @@ export class ParserContext
                 }
             }
         }
-    }
-    }
-
-
     }
 }

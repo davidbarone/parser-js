@@ -6,7 +6,7 @@ type VisitorActionType = (visitor: Visitor, node: Node) => void;
 export class Visitor {
     Visitors: Dictionary<VisitorActionType>;
     State: any = null;
-    
+
     constructor(initialState: any = null) {
         this.Visitors = {};
         if (initialState != null)

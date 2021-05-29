@@ -17,13 +17,13 @@ export class ProductionRule {
                 var symbol = new Symbol(s, this.RuleType);
                 this.Symbols.push(symbol);
             } else {
-                this.Symbols.push(symbol);
+                this.Symbols.push(s as Symbol);
             }
         });
     }
 
     Name: string;
-    
+
     get IsGenerated(): boolean {
         return this.Name.includes("'");
     }
@@ -42,28 +42,24 @@ export class ProductionRule {
 
     Symbols: Array<Symbol>;
 
-    IsEnumeratedSymbol(alias: string) : boolean
-    {
+    IsEnumeratedSymbol(alias: string): boolean {
         let isList: boolean = false;
         let found: boolean = false;
 
         var symbols = this.Symbols.filter(s => s.Alias === alias);
 
-        if (symbols.length >= 1)
-        {
+        if (symbols.length >= 1) {
             found = true;
             if (symbols.length > 1)
                 isList = true;
-            else
-            {
+            else {
                 var symbol = symbols[0];
                 if (symbol.Many)
                     isList = true;
             }
         }
 
-        if (!found)
-        {
+        if (!found) {
             throw new Error(`Symbol ${alias} does not exist in production rule ${this.Name}.`);
         }
 
@@ -71,7 +67,7 @@ export class ProductionRule {
     }
 
     Parse(context: ParserContext, obj: BoxedObject<object>): boolean {
- 
+
         context.CurrentProductionRule.push(this);
         context.PushResult(this.GetResultObject());
 
@@ -79,7 +75,7 @@ export class ProductionRule {
         let success: boolean = true;
 
         // Rule is non terminal
-        for (let i = 0; i < this.Symbols.length; i++){
+        for (let i = 0; i < this.Symbols.length; i++) {
             let symbol = this.Symbols[i];
             if (symbol.Optional && context.TokenEOF)
                 continue;
@@ -106,14 +102,14 @@ export class ProductionRule {
         }
     }
 
-    private onlyUnique(value, index, self) {
+    private onlyUnique(value: any, index: number, self: Array<any>) {
         return self.indexOf(value) === index;
     }
-          
-    GetResultObject(): object {
+
+    GetResultObject(): object | null {
         let hasBlankAlias: boolean = false;
         let hasNonBlankAlias: boolean = false;
-        let ret: object = null;
+        let ret: object | null = null;
 
         // Get all the aliases
         this.Symbols.map(s => s.Alias).filter(this.onlyUnique).forEach(alias => {
@@ -136,8 +132,7 @@ export class ProductionRule {
         return ret;
     }
 
-    public toString() : string
-    {
+    public toString(): string {
         let symbols = this.Symbols.join(", ");
         return `${this.Name} = ${symbols};`;
     }
