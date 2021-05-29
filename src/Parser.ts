@@ -2,6 +2,7 @@ import { ProductionRule } from "./ProductionRule"
 import { Visitor } from "./Visitor"
 import { Node } from "./Node"
 import { Token } from "./Token"
+import { RuleType } from "./RuleType"
 
 export class Parser {
     Grammar: string = "";
@@ -149,6 +150,59 @@ export class Parser {
 
         return visitor;
     }
+
+    public constructor(name: ProductionRule[], rootProductionRule: string, ...ignoreTokens: string[]);
+    public constructor(grammar: string, rootProductionRule: string, ...ignoreTokens: string[]);
+    public constructor(grammar: any, rootProductionRule: string, ...ignoreTokens: string[]) {
+
+        this.IgnoreTokens = [...ignoreTokens];
+        this.RootProductionRule = rootProductionRule;
+        if (typeof (grammar) === "string") {
+            let parser: Parser = new Parser(this.BNFGrammar, "grammar", "COMMENT", "NEWLINE");
+            var tokens = parser.Tokenise(grammar);
+            var ast = parser.Parse(grammar);
+            productionRules = (IList<ProductionRule>)parser.Execute(ast, BNFVisitor, (d) => d.ProductionRules);
+            productionRules = RemoveDirectLeftRecursion(productionRules);
+            this.productionRules = EliminateEmptyProduction(this.ProductionRules);
+        } else {
+            this.ProductionRules = grammar;
+            this.IgnoreTokens = [...ignoreTokens];
+            this.RootProductionRule = rootProductionRule;
+        }
+    }
+
+    Tokenise(input: string): Token[] {
+        if (!input) {
+            return [];
+        }
+
+        // Start at the beginning of the string and
+        // recursively identify tokens. First token to match wins
+        for (let rule of this.ProductionRules.filter(p => p.RuleType === RuleType.LexerRule)) {
+            var symbols = rule.Symbols;
+            if (symbols.length > 1)
+                throw ("Lexer rule can only have 1 symbol");
+
+            var symbol = symbols[0];
+
+            if (symbol.IsMatch((input))) {
+                var match = symbol.Match(input);
+                var token: Token =
+                {
+                    TokenName: rule.Name,
+                    TokenValue: match.Matched || ""
+                };
+                let list: Token[] = [];
+                if (this.IgnoreTokens.indexOf(rule.Name) == -1) {
+                    list.push(token);
+                }
+                list.push(...this.Tokenise(match.Remainder || ""));
+                return list;
+            }
+        }
+        throw (`Syntax error near ${input.substr(0, 20)}...`);
+    }
+
 
 
 }
