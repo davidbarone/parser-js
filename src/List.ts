@@ -1,8 +1,12 @@
 export class List<T> {
     private values: T[] = [];
 
-    private constructor (values: T[]) {
+    private constructor(values: T[]) {
         this.values = values;
+    }
+
+    public get count(): number {
+        return this.values.length;
     }
 
     public add(value: T): void {
@@ -24,7 +28,7 @@ export class List<T> {
     public static from<U>(values: U[]): List<U> {
         // Perhaps we perform some logic here.
         // ...
-    
+
         return new List<U>(values);
     }
 
