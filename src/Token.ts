@@ -1,4 +1,4 @@
 export class Token {
-    TokenName: string;
-    TokenValue: string;
+    TokenName: string = "";
+    TokenValue: string = "";
 }

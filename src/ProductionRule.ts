@@ -89,7 +89,7 @@ export class ProductionRule {
             }
         }
 
-        obj.Inner = context.PopResult();
+        obj.Inner = context.PopResult() as Object;
         context.CurrentProductionRule.pop();
 
         if (success) {
@@ -97,7 +97,7 @@ export class ProductionRule {
         }
         else {
             context.CurrentTokenIndex = temp;
-            obj = null;
+            obj = new BoxedObject({});
             return false;
         }
     }
@@ -106,10 +106,10 @@ export class ProductionRule {
         return self.indexOf(value) === index;
     }
 
-    GetResultObject(): object | null {
+    GetResultObject(): object {
         let hasBlankAlias: boolean = false;
         let hasNonBlankAlias: boolean = false;
-        let ret: object | null = null;
+        let ret: object = {};
 
         // Get all the aliases
         this.Symbols.map(s => s.Alias).filter(this.onlyUnique).forEach(alias => {

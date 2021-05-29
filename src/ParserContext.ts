@@ -80,7 +80,7 @@ export class ParserContext {
             }
             else {
                 if (isEnumerated) {
-                    var obj = this.Results.pop();
+                    var obj = this.Results.pop() as Object;
                     this.Results.push(obj.union(value));
                 }
                 else {

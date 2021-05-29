@@ -80,7 +80,7 @@ export class Symbol {
         }
         else {
             while (true) {
-                let token: Token = null;
+                let token: Token | null = null;
                 if (!context.TokenEOF) {
                     token = context.TryToken(this.Name);
                 }
@@ -106,7 +106,7 @@ export class Symbol {
                         ok = rule.Parse(context, obj);
                         if (ok) {
                             if (!this.Ignore)
-                                context.UpdateResult(this.Alias, obj.Inner);
+                                context.UpdateResult(this.Alias, obj.Inner as Object);
                             break;
                         }
                     }
