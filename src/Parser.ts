@@ -3,6 +3,8 @@ import { Visitor } from "./Visitor"
 import { Node } from "./Node"
 import { Token } from "./Token"
 import { RuleType } from "./RuleType"
+import { ParserContext } from "./ParserContext"
+import { BoxedObject } from "./BoxedObject"
 
 export class Parser {
     Grammar: string = "";
@@ -160,10 +162,8 @@ export class Parser {
         if (typeof (grammar) === "string") {
             let parser: Parser = new Parser(this.BNFGrammar, "grammar", "COMMENT", "NEWLINE");
             var tokens = parser.Tokenise(grammar);
-            var ast = parser.Parse(grammar);
-            productionRules = (IList<ProductionRule>)parser.Execute(ast, BNFVisitor, (d) => d.ProductionRules);
-            productionRules = RemoveDirectLeftRecursion(productionRules);
-            this.productionRules = EliminateEmptyProduction(this.ProductionRules);
+            var ast = parser.Parse(grammar) as Node;
+            this.ProductionRules = parser.Execute(ast, this.BNFVisitor, (d) => d.ProductionRules) as ProductionRule[];
         } else {
             this.ProductionRules = grammar;
             this.IgnoreTokens = [...ignoreTokens];
@@ -203,6 +203,48 @@ export class Parser {
         throw (`Syntax error near ${input.substr(0, 20)}...`);
     }
 
+    Parse(input: string, throwOnFailure: boolean = true): Node | null {
+        if (!input)
+            return null;
 
+        var tokens = this.Tokenise(input);
 
+        if (tokens == null || tokens.length == 0)
+            throw ("input yields no tokens!");
+
+        // find any matching production rules.
+        var rules = this.ProductionRules.filter(p => this.RootProductionRule == null || p.Name.toLowerCase() === this.RootProductionRule.toLowerCase());
+        if (rules.length == 0) {
+            throw (`Production rule: ${this.RootProductionRule} not found.`);
+        }
+
+        // try each rule. Use the first rule which succeeds.
+        for (let rule of rules) {
+            let context: ParserContext = new ParserContext(this.ProductionRules, tokens);
+            let obj: Object = {};
+            let box: BoxedObject<Object> = new BoxedObject(obj);
+            var ok = rule.Parse(context, box);
+            if (ok && context.TokenEOF) {
+                return box.Inner as Node;
+            }
+        }
+
+        // should not get here...
+        if (throwOnFailure)
+            throw "Input cannot be parsed.";
+        else
+            return null;
+    }
+
+    Execute(node: Node, visitors: Visitor, resultMapping: (result: any) => object | null = (state) => state): Object | null {
+        if (node == null)
+            return null;
+
+        node.Accept(visitors);
+        var state = visitors.State;
+        if (resultMapping == null)
+            return state;
+        else
+            return resultMapping(state);
+    }
 }
