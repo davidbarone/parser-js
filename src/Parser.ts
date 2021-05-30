@@ -236,7 +236,7 @@ export class Parser {
             return null;
     }
 
-    Execute(node: Node, visitors: Visitor, resultMapping: (result: any) => object | null = (state) => state): Object | null {
+    Execute(node: Node | null, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
         if (node == null)
             return null;
 
