@@ -15,18 +15,18 @@ export class Parser {
     private get BNFGrammar(): ProductionRule[] {
         return [
             // Lexer Rules
-            new ProductionRule("COMMENT", "\/\*.*\*\/"),           // comments 
+            new ProductionRule("COMMENT", "([/][*]).*([*][/])"),    // comments 
             new ProductionRule("EQ", "="),                          // definition
             new ProductionRule("COMMA", "[,]"),                     // concatenation
             new ProductionRule("COLON", "[:]"),                     // rewrite / aliasing
             new ProductionRule("SEMICOLON", ";"),                   // termination
             new ProductionRule("MODIFIER", "[?!+*]"),               // modifies the symbol
             new ProductionRule("OR", "[|]"),                       // alternation
-            new ProductionRule("QUOTEDLITERAL", "\"(?:[^\"\\]|\\.)*\""),
+            new ProductionRule("QUOTEDLITERAL", "\"(?:[^\"]|\\.)*\""),
             new ProductionRule("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9_']+"),
             new ProductionRule("NEWLINE", "\n"),
-            new ProductionRule("LPAREN", "\("),
-            new ProductionRule("RPAREN", "\)"),
+            new ProductionRule("LPAREN", "[(]"),
+            new ProductionRule("RPAREN", "[)]"),
 
             // Parser Rules
             new ProductionRule("alias", ":IDENTIFIER?", ":COLON"),

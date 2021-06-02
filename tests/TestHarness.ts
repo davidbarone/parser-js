@@ -13,11 +13,14 @@ export class TestHarness {
         visitor: Visitor = new Visitor(null),
         resultMapping: ((result: any) => any) = (r) => r
     ): object | null {
+        debugger;
         let parser: Parser = new Parser(grammar, rootProductionRule);
         let rules: ProductionRule[] = parser.ProductionRules;
 
         if (rules) {
             console.log(`Production rules: ${rules.length}, input: ${input}.`);
+        } else {
+            console.log('whoops');
         }
 
         if (input) {

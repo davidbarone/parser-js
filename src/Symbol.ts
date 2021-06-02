@@ -45,7 +45,7 @@ export class Symbol {
     }
 
     Match(input: string): MatchResult {
-        let re: RegExp = new RegExp(`\A[\s]*(?<match>(${this.Name}))(?<remainder>([\s\S]*))[\s]*\Z`);
+        let re: RegExp = new RegExp(`[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*`);
 
         if (re.test(input)) {
             let match = re.exec(input) as RegExpExecArray;
@@ -65,7 +65,7 @@ export class Symbol {
     }
 
     IsMatch(input: string): boolean {
-        let re: RegExp = new RegExp(`\A[\s]*(?<match>(${this.Name}))(?<remainder>([\s\S]*))[\s]*\Z`);
+        let re: RegExp = new RegExp(`[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*`);
         return re.test(input);
     }
 
