@@ -9,10 +9,9 @@ describe("Production rule tests", () => {
 
     test("x", () => {
 
-        console.log('============================');
         let p: Parser = new Parser("myrule: TEST;", "myrule");
         let rules: ProductionRule[] = p.ProductionRules;
-        console.log('AAAAAAAAAAAAAAAAAAAAAAAA');
+
 
         let pattern = "([/][*]).*([*][/])";
         let input = "/*sdf*/ the cat sat on the mat"

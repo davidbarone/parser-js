@@ -44,8 +44,17 @@ export class Symbol {
         this.Ignore = modifier == "!";
     }
 
+    /**
+     * The regexp pattern used by this class to test input.
+     */
+    get MatchPattern(): string {
+        let pattern = `^[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*$`;
+        console.log(pattern);
+        return pattern;
+    }
+
     Match(input: string): MatchResult {
-        let re: RegExp = new RegExp(`[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*`);
+        let re: RegExp = new RegExp(this.MatchPattern);
 
         if (re.test(input)) {
             let match = re.exec(input) as RegExpExecArray;
@@ -65,7 +74,7 @@ export class Symbol {
     }
 
     IsMatch(input: string): boolean {
-        let re: RegExp = new RegExp(`[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*`);
+        let re: RegExp = new RegExp(this.MatchPattern);
         return re.test(input);
     }
 
