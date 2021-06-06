@@ -5,12 +5,15 @@ import { Token } from "./Token"
 import { RuleType } from "./RuleType"
 import { ParserContext } from "./ParserContext"
 import { BoxedObject } from "./BoxedObject"
+import { ILoggable } from "./ILoggable"
+import { LogArgs } from "./LogArgs"
 
-export class Parser {
+export class Parser implements ILoggable {
     Grammar: string = "";
     RootProductionRule: string = "";
     ProductionRules: ProductionRule[] = [];
     IgnoreTokens: string[] = [];
+    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
 
     private get BNFGrammar(): ProductionRule[] {
         return [
@@ -22,7 +25,7 @@ export class Parser {
             new ProductionRule("SEMICOLON", ";"),                   // termination
             new ProductionRule("MODIFIER", "[?!+*]"),               // modifies the symbol
             new ProductionRule("OR", "[|]"),                       // alternation
-            new ProductionRule("QUOTEDLITERAL", "\"(?:[^\"]|\\.)*\""),
+            new ProductionRule("QUOTEDLITERAL", '"(?:[^"]|\\.)*"'),
             new ProductionRule("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9_']+"),
             new ProductionRule("NEWLINE", "\n"),
             new ProductionRule("LPAREN", "[(]"),
@@ -220,6 +223,7 @@ export class Parser {
 
         // try each rule. Use the first rule which succeeds.
         for (let rule of rules) {
+            rule.LogHandler = this.LogHandler;
             let context: ParserContext = new ParserContext(this.ProductionRules, tokens);
             let obj: Object = {};
             let box: BoxedObject<Object> = new BoxedObject(obj);

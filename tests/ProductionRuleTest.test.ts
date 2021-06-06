@@ -13,15 +13,6 @@ describe("Production rule tests", () => {
         let rules: ProductionRule[] = p.ProductionRules;
 
 
-        let pattern = "([/][*]).*([*][/])";
-        let input = "/*sdf*/ the cat sat on the mat"
-        let re: RegExp = new RegExp(`(?<match>(${pattern}))(?<remainder>(.*))`);
-        let t = re.test(input);
-        console.log(t);
-        let rea: RegExpExecArray | null = re.exec(input);
-        if (rea && rea.groups) {
-            console.log(rea.groups);
-        }
     });
 
     test.each([

@@ -4,8 +4,11 @@ import { BoxedObject } from "./BoxedObject"
 import { ParserContext } from "./ParserContext"
 import { Node } from "./Node"
 import { List } from "./List"
+import { ILoggable } from "./ILoggable"
+import { LogArgs } from "./LogArgs"
+import { LogType } from "./LogType"
 
-export class ProductionRule {
+export class ProductionRule implements ILoggable {
 
     public constructor(name: string, ...symbols: string[]);
     public constructor(name: string, ...symbols: symbol[]);
@@ -42,6 +45,8 @@ export class ProductionRule {
 
     Symbols: Array<Symbol>;
 
+    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
+
     IsEnumeratedSymbol(alias: string): boolean {
         let isList: boolean = false;
         let found: boolean = false;
@@ -68,6 +73,13 @@ export class ProductionRule {
 
     Parse(context: ParserContext, obj: BoxedObject<object>): boolean {
 
+        this.LogHandler(this,
+            {
+                LogType: LogType.BEGIN,
+                NestingLevel: context.CurrentProductionRule.size(),
+                Message: `${this.Name} - Pushing new result to stack.`
+            });
+
         context.CurrentProductionRule.push(this);
         context.PushResult(this.GetResultObject());
 
@@ -77,6 +89,7 @@ export class ProductionRule {
         // Rule is non terminal
         for (let i = 0; i < this.Symbols.length; i++) {
             let symbol = this.Symbols[i];
+            symbol.LogHandler = this.LogHandler;
             if (symbol.Optional && context.TokenEOF)
                 continue;
 
@@ -93,9 +106,23 @@ export class ProductionRule {
         context.CurrentProductionRule.pop();
 
         if (success) {
+            this.LogHandler(this,
+                {
+                    LogType: LogType.SUCCESS,
+                    NestingLevel: context.CurrentProductionRule.size(),
+                    Message: ""
+                });
+
             return true;
         }
         else {
+            this.LogHandler(this,
+                {
+                    LogType: LogType.FAILURE,
+                    NestingLevel: context.CurrentProductionRule.size(),
+                    Message: ""
+                });
+
             context.CurrentTokenIndex = temp;
             obj = new BoxedObject({});
             return false;
@@ -109,10 +136,12 @@ export class ProductionRule {
     GetResultObject(): object {
         let hasBlankAlias: boolean = false;
         let hasNonBlankAlias: boolean = false;
-        let ret: object = {};
+        let ret: object | null = null;
 
         // Get all the aliases
-        this.Symbols.map(s => s.Alias).filter(this.onlyUnique).forEach(alias => {
+        let aliases: string[] = this.Symbols.map(s => s.Alias);
+        let uniqueAliases: string[] = aliases.filter(this.onlyUnique);
+        uniqueAliases.forEach(alias => {
             if (alias) {
                 hasNonBlankAlias = true;
 
@@ -129,7 +158,7 @@ export class ProductionRule {
         if (hasNonBlankAlias && hasBlankAlias)
             throw new Error("Cannot mix blank and non-blank aliases.");
 
-        return ret;
+        return ret || {};
     }
 
     public toString(): string {

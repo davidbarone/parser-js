@@ -3,14 +3,18 @@ import { MatchResult } from "./MatchResult"
 import { ParserContext } from "./ParserContext"
 import { Token } from "./Token"
 import { BoxedObject } from "./BoxedObject"
+import { ILoggable } from "./ILoggable"
+import { LogArgs } from "./LogArgs"
+import { LogType } from "./LogType"
 
-export class Symbol {
+export class Symbol implements ILoggable {
 
     Alias: string;
     Name: string;
     Optional: boolean;
     Many: boolean;
     Ignore: boolean;
+    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
 
     constructor(value: string, ruleType: RuleType) {
         let name: string = value;
@@ -80,6 +84,13 @@ export class Symbol {
 
     Parse(context: ParserContext) {
 
+        this.LogHandler(this,
+            {
+                LogType: LogType.BEGIN,
+                NestingLevel: context.CurrentProductionRule.size(),
+                Message: `Token Index: ${context.CurrentTokenIndex}, Results: ${context.Results.size()}, Symbol=${this.Name}, Next Token=[${context.PeekToken().TokenName} - \"${context.PeekToken().TokenValue}\"]`
+            });
+
         let temp: number = context.CurrentTokenIndex;
         let ok: boolean = false;
         let once: boolean = false;
@@ -111,6 +122,7 @@ export class Symbol {
 
                     for (let i = 0; i < rules.length; i++) {
                         let rule = rules[i];
+                        rule.LogHandler = this.LogHandler;
                         let obj: BoxedObject<object> = new BoxedObject<object>();
                         ok = rule.Parse(context, obj);
                         if (ok) {
@@ -137,6 +149,14 @@ export class Symbol {
 
         // return true if match (at least once).
         var success = ok || once || this.Optional;
+
+        this.LogHandler(this,
+            {
+                LogType: success ? LogType.SUCCESS : LogType.FAILURE,
+                NestingLevel: context.CurrentProductionRule.size(),
+                Message: `"Token Index: ${context.CurrentTokenIndex}, Results: ${context.Results.size()}, Symbol=${this.Name}, Next Token=[${context.PeekToken().TokenName} - \"${context.PeekToken().TokenValue}\"]`
+            });
+
         return success;
     }
 }
