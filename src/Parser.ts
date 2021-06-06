@@ -179,7 +179,8 @@ export class Parser implements ILoggable {
     }
 
     Tokenise(input: string): Token[] {
-        if (!input) {
+        // If input only whitespace, return with no tokens
+        if (!/\S/.test(input)) {
             return [];
         }
 

@@ -26,8 +26,8 @@ describe("Valid production rule tests", () => {
 
         /* This is a test */
 
-        SIMPLE  =   ""X"";
-        ANOTHER=""Y"";`],
+        SIMPLE="X";
+        ANOTHER="Y";`],
         ["Single rule with comment", "SIMPLE=\"X\"; /* This is a comment */"],
         ["Lexer and parser rule #1", `
         SIMPLE=\"X\";
