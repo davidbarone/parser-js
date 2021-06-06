@@ -7,6 +7,7 @@ import { ParserContext } from "./ParserContext"
 import { BoxedObject } from "./BoxedObject"
 import { ILoggable } from "./ILoggable"
 import { LogArgs } from "./LogArgs"
+import { LogType } from "./LogType"
 
 export class Parser implements ILoggable {
     Grammar: string = "";
@@ -156,14 +157,15 @@ export class Parser implements ILoggable {
         return visitor;
     }
 
-    public constructor(name: ProductionRule[], rootProductionRule: string, ...ignoreTokens: string[]);
-    public constructor(grammar: string, rootProductionRule: string, ...ignoreTokens: string[]);
-    public constructor(grammar: any, rootProductionRule: string, ...ignoreTokens: string[]) {
+    public constructor(name: ProductionRule[], rootProductionRule: string, logHandler: (sender: any, args: LogArgs) => void, ...ignoreTokens: string[]);
+    public constructor(grammar: string, rootProductionRule: string, logHandler: (sender: any, args: LogArgs) => void, ...ignoreTokens: string[]);
+    public constructor(grammar: any, rootProductionRule: string, logHandler: (sender: any, args: LogArgs) => void, ...ignoreTokens: string[]) {
 
+        this.LogHandler = logHandler;
         this.IgnoreTokens = [...ignoreTokens];
         this.RootProductionRule = rootProductionRule;
         if (typeof (grammar) === "string") {
-            let parser: Parser = new Parser(this.BNFGrammar, "grammar", "COMMENT", "NEWLINE");
+            let parser: Parser = new Parser(this.BNFGrammar, "grammar", this.LogHandler, "COMMENT", "NEWLINE");
             var tokens = parser.Tokenise(grammar);
             var ast = parser.Parse(grammar) as Node;
             this.ProductionRules = parser.Execute(ast, this.BNFVisitor, (d) => d.ProductionRules) as ProductionRule[];
