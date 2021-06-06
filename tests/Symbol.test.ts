@@ -13,6 +13,7 @@ function symbolMatch(pattern: string, input: string): MatchResult {
 describe("Symbol match", () => {
 
     test.each([
+        ["[:]", ": There is a colon at the start here.", true, ":", " There is a colon at the start here."],
         ['"(?:[^"]|\\.)*"', '"This is some quoted text"; Rest of file;', true, '"This is some quoted text"', '; Rest of file;'],
         ["[(]", "This input has no left bracket", false, null, null],
         ["[(]", "This input has a left ( bracket but not at start", false, null, null],

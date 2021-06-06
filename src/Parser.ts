@@ -60,9 +60,8 @@ export class Parser implements ILoggable {
         visitor.AddVisitor(
             "grammar",
             (v, n) => {
-                let rulesObject: { [key: string]: Node } = n.Properties["RULES"] as { [key: string]: Node };
-                for (let key in rulesObject) {
-                    let node: Node = rulesObject[key];
+                let rulesObject: Node[] = n.Properties["RULES"] as Node[];
+                for (let node of rulesObject) {
                     node.Accept(v);
                 }
             });
@@ -89,7 +88,7 @@ export class Parser implements ILoggable {
                         rule,
                         expansionValue
                     );
-                    v.State.ProductionRules.Add(pr);
+                    v.State.ProductionRules.push(pr);
                 }
                 else {
                     v.State.CurrentRule = rule;
@@ -149,7 +148,7 @@ export class Parser implements ILoggable {
                         v.State.CurrentRule,
                         ...tokens
                     );
-                    v.State.ProductionRules.Add(pr);
+                    v.State.ProductionRules.push(pr);
                 }
             }
         );

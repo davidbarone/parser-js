@@ -9,7 +9,7 @@ describe("Production rule tests", () => {
 
     test("x", () => {
 
-        let p: Parser = new Parser("myrule: TEST;", "myrule");
+        let p: Parser = new Parser("myrule: TEST;", "myrule", (sender, args) => { });
         let rules: ProductionRule[] = p.ProductionRules;
 
 
