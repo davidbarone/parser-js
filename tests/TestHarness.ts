@@ -2,6 +2,7 @@ import { Visitor } from "../src/Visitor"
 import { Parser } from "../src/Parser"
 import { ProductionRule } from "../src/ProductionRule";
 import { Node } from "../src/Node";
+import { LogArgs } from "../src/LogArgs";
 
 export class TestHarness {
 
@@ -14,7 +15,7 @@ export class TestHarness {
         resultMapping: ((result: any) => any) = (r) => r
     ): object | null {
         debugger;
-        let parser: Parser = new Parser(grammar, rootProductionRule);
+        let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
         let rules: ProductionRule[] = parser.ProductionRules;
 
         if (rules) {

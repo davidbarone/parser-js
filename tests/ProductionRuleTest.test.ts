@@ -5,22 +5,15 @@ import { ProductionRule } from "../src/ProductionRule"
 function escapeSlash(input: string): string {
     return input.replace('\\', '\\\\');
 }
-describe("Production rule tests", () => {
-
-    test("x", () => {
-
-        let p: Parser = new Parser("myrule: TEST;", "myrule", (sender, args) => { });
-        let rules: ProductionRule[] = p.ProductionRules;
-
-
-    });
+describe("Invalid production rule tests", () => {
 
     test.each([
         ["empty string", ""],
         ["space", " "],
         ["comment only", "/* This is a comment */"]
-    ])('%i', (a, b) => {
-        TestHarness.doTest(a, b);
+    ])('%s', (a, b) => {
+        let fn = () => { TestHarness.doTest(a, b) };
+        expect(fn).toThrow("Invalid grammar. No production rules found");
     });
 });
 
@@ -52,7 +45,7 @@ describe("Valid production rule tests", () => {
         SIMPLE=\"X\";
         ANOTHER=\"Y\";
         rule=ANOTHER | SIMPLE;`]
-    ])('%i', (a, b) => {
+    ])('%s', (a, b) => {
         TestHarness.doTest(a, b);
     });
 });

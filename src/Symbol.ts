@@ -53,7 +53,6 @@ export class Symbol implements ILoggable {
      */
     get MatchPattern(): string {
         let pattern = `^[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*$`;
-        console.log(pattern);
         return pattern;
     }
 

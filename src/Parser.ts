@@ -166,6 +166,9 @@ export class Parser implements ILoggable {
         if (typeof (grammar) === "string") {
             let parser: Parser = new Parser(this.BNFGrammar, "grammar", this.LogHandler, "COMMENT", "NEWLINE");
             var tokens = parser.Tokenise(grammar);
+            if (tokens.length == 0) {
+                throw "Invalid grammar. No production rules found";
+            }
             var ast = parser.Parse(grammar) as Node;
             this.ProductionRules = parser.Execute(ast, this.BNFVisitor, (d) => d.ProductionRules) as ProductionRule[];
         } else {
