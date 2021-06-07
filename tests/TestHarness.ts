@@ -6,6 +6,16 @@ import { LogArgs } from "../src/LogArgs";
 
 export class TestHarness {
 
+    static buildGrammar(
+        name: string,
+        grammar: string,
+        rootProductionRule: string = ""
+    ): number {
+        let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
+        let rules: ProductionRule[] = parser.ProductionRules;
+        return rules.length;
+    }
+
     static doTest(
         name: string,
         grammar: string,
@@ -14,15 +24,8 @@ export class TestHarness {
         visitor: Visitor = new Visitor(null),
         resultMapping: ((result: any) => any) = (r) => r
     ): object | null {
-        debugger;
         let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
         let rules: ProductionRule[] = parser.ProductionRules;
-
-        if (rules) {
-            console.log(`Production rules: ${rules.length}, input: ${input}.`);
-        } else {
-            console.log('whoops');
-        }
 
         if (input) {
             let ast: Node | null = parser.Parse(input, true);

@@ -20,32 +20,33 @@ describe("Invalid production rule tests", () => {
 describe("Valid production rule tests", () => {
 
     test.each([
-        ["Single rule", "SIMPLE=\"X\";"],
-        ["Two rules", "SIMPLE=\"X\";ANOTHER=\"Y\";"],
+        ["Single rule", "SIMPLE=\"X\";", 1],
+        ["Two rules", "SIMPLE=\"X\";ANOTHER=\"Y\";", 2],
         ["Multiline", `
 
         /* This is a test */
 
         SIMPLE="X";
-        ANOTHER="Y";`],
-        ["Single rule with comment", "SIMPLE=\"X\"; /* This is a comment */"],
+        ANOTHER="Y";`, 2],
+        ["Single rule with comment", "SIMPLE=\"X\"; /* This is a comment */", 1],
         ["Lexer and parser rule #1", `
         SIMPLE=\"X\";
         ANOTHER=\"Y\";
-        rule=SIMPLE;`],
+        rule=SIMPLE;`, 3],
         ["Lexer and parser rule #2", `
         SIMPLE=\"X\";
         ANOTHER=\"Y\";
-        rule=SIMPLE,ANOTHER;`],
+        rule=SIMPLE,ANOTHER;`, 3],
         ["Lexer and parser with alias and modifier", `
         SIMPLE=\"X\";
         ANOTHER=\"Y\";
-        rule=TEST:SIMPLE*;`],
-        ["Lexer and parser with alternates", `
+        rule=TEST:SIMPLE*;`, 3],
+        ["Lexer and parser with alternates. Note that alternates get compiled as separate production rules.", `
         SIMPLE=\"X\";
         ANOTHER=\"Y\";
-        rule=ANOTHER | SIMPLE;`]
-    ])('%s', (a, b) => {
-        TestHarness.doTest(a, b);
+        rule=ANOTHER | SIMPLE;`, 4]
+    ])('%s', (description, grammar, expectedProductionRuleCount) => {
+        let rules = TestHarness.buildGrammar(description, grammar);
+        expect(rules).toBe(expectedProductionRuleCount);
     });
 });
