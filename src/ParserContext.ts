@@ -21,10 +21,7 @@ export class ParserContext {
 
     PeekToken(): Token {
         if (this.CurrentTokenIndex >= this.Tokens.length)
-            return {
-                TokenName: "<EOF>",
-                TokenValue: "<EOF>"
-            };
+            return new Token("<EOF>", "<EOF>")
         else
             return this.Tokens[this.CurrentTokenIndex];
     }

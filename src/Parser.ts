@@ -195,11 +195,7 @@ export class Parser implements ILoggable {
 
             if (symbol.IsMatch((input))) {
                 var match = symbol.Match(input);
-                var token: Token =
-                {
-                    TokenName: rule.Name,
-                    TokenValue: match.Matched || ""
-                };
+                var token: Token = new Token(rule.Name, match.Matched || "");
                 let list: Token[] = [];
                 if (this.IgnoreTokens.indexOf(rule.Name) == -1) {
                     list.push(token);
