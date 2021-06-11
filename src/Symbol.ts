@@ -119,6 +119,10 @@ export class Symbol implements ILoggable {
                         .filter(r => r.RuleType == RuleType.ParserRule)
                         .filter(r => r.Name.toLowerCase() === this.Name.toLowerCase());
 
+                    if (rules.length == 0) {
+                        break;
+                    }
+
                     for (let i = 0; i < rules.length; i++) {
                         let rule = rules[i];
                         rule.LogHandler = this.LogHandler;

@@ -1,25 +1,68 @@
-import { MatchResult } from "./MatchResult";
+import { Visitor } from "./Visitor";
+import { Token } from "./Token";
 import { Parser } from "./Parser";
-import { RuleType } from "./RuleType";
-import { Symbol } from "./Symbol";
 import { ProductionRule } from "./ProductionRule";
 import { LogArgs } from "./LogArgs";
-import { LogType } from "./LogType";
+import { Node } from "./Node";
 
-class person {
-    firstname: string = "";
-    surname: string = "";
+function buildGrammar(
+    name: string,
+    grammar: string,
+    rootProductionRule: string = ""
+): number {
+    let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
+    let rules: ProductionRule[] = parser.ProductionRules;
+    return rules.length;
 }
 
-let p: person = {
-    firstname: "sdfs",
-    surname: "sfdssffsd"
-} as person
+function doTest(
+    name: string,
+    grammar: string,
+    input: string = "",
+    rootProductionRule: string = "",
+    visitor: Visitor = new Visitor(null),
+    resultMapping: ((result: any) => any) = (r) => r
+): object | null {
+    let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
+    let rules: ProductionRule[] = parser.ProductionRules;
 
-let z: boolean = p instanceof person;
+    if (input) {
+        let ast: Node | null = parser.Parse(input, true);
+        if (visitor !== null) {
+            let actual = parser.Execute(ast, visitor, resultMapping);
+            return actual;
+        }
+    }
+    return null;
+}
 
-// Enter any development-only code to test here.
-let grammar = 'SIMPLE="X";';
-let rootProductionRule = "SIMPLE";
-let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
-console.log(parser.ProductionRules);
+
+const FooBarBazGrammar = () => {
+    return `
+    FOO     = "FOO";
+    BAR     = "BAR";
+    BAZ     = "BAZ";
+    fb      = :FOO,:BAR*;
+    fbb     = ITEMS:fb,ITEMS:BAZ*;`
+}
+
+const FooBarBazVisitor = () => {
+
+    let state: any = {};
+    let tokens: Token[] = [];
+    state.items = tokens;
+
+    let visitor: Visitor = new Visitor(state);
+
+    visitor.AddVisitor(
+        "fbb",
+        (v, n) => {
+            v.State.items = n.Properties["ITEMS"];
+        }
+    );
+
+    return visitor;
+}
+
+var result = doTest("FOOBARBAZ1", FooBarBazGrammar(), "FOOBAR", "fbb", FooBarBazVisitor(), (d: any) => d.items.length);
+console.log(result);

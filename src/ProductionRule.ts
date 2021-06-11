@@ -151,7 +151,7 @@ export class ProductionRule implements ILoggable {
             else {
                 hasNonBlankAlias = false;
                 if (this.IsEnumeratedSymbol(alias)) {
-                    ret = List.create<object>([]);
+                    ret = [];   //List.create<object>([]);
                 }
             }
         });
