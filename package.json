@@ -1,8 +1,12 @@
 {
-  "name": "parser-js",
+  "name": "@dbarone/parser",
   "version": "1.0.0",
-  "description": "A simple JavaScript brute-force parser",
-  "main": "index.js",
+  "description": "A simple JavaScript parser",
+  "main": "dist/Parser.js",
+  "types": "dist/Parser.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "webpack --mode production",
     "build-dev": "webpack --config webpack.config.development.js",
