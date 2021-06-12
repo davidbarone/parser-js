@@ -28,6 +28,10 @@ function doTest(
 
     if (input) {
         let ast: Node | null = parser.Parse(input, true);
+        if (ast !== null) {
+            console.log(ast.prettyPrint());
+        }
+
         if (visitor !== null) {
             let actual = parser.Execute(ast, visitor, resultMapping);
             return actual;
@@ -63,6 +67,7 @@ const FooBarBazVisitor = () => {
 
     return visitor;
 }
+
 
 var result = doTest("FOOBARBAZ1", FooBarBazGrammar(), "FOOBAR", "fbb", FooBarBazVisitor(), (d: any) => d.items.length);
 console.log(result);
