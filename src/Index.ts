@@ -55,12 +55,4 @@ const grammar = () => `
  primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;`;
 
 
-let parser: Parser = new Parser(grammar(), "expression", () => { });
-let rules: ProductionRule[] = parser.ProductionRules;
-console.log(rules);
-let ast: Node | null = parser.Parse("9+5", true);
-if (ast !== null) {
-    let str: string = ast.prettyPrint();
-    console.log(str);
-}
 

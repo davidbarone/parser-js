@@ -3,6 +3,7 @@ import { Visitor } from "../src/Visitor";
 import { Node } from "../src/Node";
 import { Token } from "../src/Token";
 import { TestHarness } from "./TestHarness";
+import { Parser } from "../src/Parser";
 
 const SubruleGrammar = () => `
  NUMBER_LITERAL  = "\\d+";
@@ -134,6 +135,34 @@ describe("Expression tests", () => {
     });
 });
 
+describe("Pretty Print test", () => {
+
+    let expected: string = `+- expression
+   +- term
+   |  +- factor
+   |     +- primary
+   |        +- NUMBER_LITERAL [9]
+   +- anonymous_1
+      +- PLUS_OP [+]
+      +- term
+         +- factor
+            +- primary
+               +- NUMBER_LITERAL [5]
+`;
+
+    let input = "9+5";
+    let parser: Parser = new Parser(SubruleGrammar(), "expression", () => { });
+    let ast: Node | null = parser.Parse(input, true);
+    let actual: string = "";
+    if (ast !== null) {
+        actual = ast.prettyPrint();
+    }
+    console.log(actual);
+    console.log(expected);
+    test("prettyprint test", () => {
+        expect(actual).toEqual(expected);
+    })
+});
 
 
 
