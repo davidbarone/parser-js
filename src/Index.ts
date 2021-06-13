@@ -40,34 +40,27 @@ function doTest(
     return null;
 }
 
+const grammar = () => `
+ NUMBER_LITERAL  = "\\d+";
+ PLUS_OP         = "\\+";
+ MINUS_OP        = "\\-";
+ MUL_OP          = "\\*";
+ DIV_OP          = "\\/";
+ LPAREN         = "\\(";
+ RPAREN         = "\\)";
+ 
+ expression      = TERMS:(:term, :(OP:MINUS_OP, term | OP:PLUS_OP, term)*);
+ term            = FACTORS:(:factor, :(OP:DIV_OP, factor | OP:MUL_OP, factor)*);
+ factor          = primary | PLUS_OP, primary | MINUS_OP, primary;
+ primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;`;
 
-const FooBarBazGrammar = () => {
-    return `
-    FOO     = "FOO";
-    BAR     = "BAR";
-    BAZ     = "BAZ";
-    fb      = :FOO,:BAR*;
-    fbb     = ITEMS:fb,ITEMS:BAZ*;`
+
+let parser: Parser = new Parser(grammar(), "expression", () => { });
+let rules: ProductionRule[] = parser.ProductionRules;
+console.log(rules);
+let ast: Node | null = parser.Parse("9+5", true);
+if (ast !== null) {
+    let str: string = ast.prettyPrint();
+    console.log(str);
 }
 
-const FooBarBazVisitor = () => {
-
-    let state: any = {};
-    let tokens: Token[] = [];
-    state.items = tokens;
-
-    let visitor: Visitor = new Visitor(state);
-
-    visitor.AddVisitor(
-        "fbb",
-        (v, n) => {
-            v.State.items = n.Properties["ITEMS"];
-        }
-    );
-
-    return visitor;
-}
-
-
-var result = doTest("FOOBARBAZ1", FooBarBazGrammar(), "FOOBAR", "fbb", FooBarBazVisitor(), (d: any) => d.items.length);
-console.log(result);

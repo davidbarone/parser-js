@@ -17,7 +17,7 @@ export class Node {
 
 
 
-    prettyPrint(indent: string = "", isLastChild: boolean = false): string {
+    prettyPrint(indent: string = "", isLastChild: boolean = true): string {
         let output: string = indent + `+- ${this.Name}\n`;
         indent += isLastChild ? "   " : "|  ";
 
@@ -31,14 +31,14 @@ export class Node {
                 for (let i = 0; i < size; i++) {
                     let childItem: any = child[i];
                     if (childItem instanceof Token) {
-                        output += `${key === lastKey ? "   " : "|  "}+- ${(childItem as Token).TokenName} [${(childItem as Token).TokenValue}]\n`;
+                        output += `${indent}+- ${(childItem as Token).TokenName} [${(childItem as Token).TokenValue}]\n`;
                     } else {
                         output += (childItem as Node).prettyPrint(indent, i === size - 1);
                     }
                 }
             } else {
                 if (child instanceof Token) {
-                    output += `${key === lastKey ? "   " : "|  "}+- ${(child as Token).TokenName} [${(child as Token).TokenValue}]\n`;
+                    output += `${indent}+- ${(child as Token).TokenName} [${(child as Token).TokenValue}]\n`;
                 } else {
                     output += (child as Node).prettyPrint(indent, key === lastKey);
                 }

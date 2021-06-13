@@ -23,6 +23,7 @@ mul_div_term_   = OP:DIV_OP, factor | OP:MUL_OP, factor;
 factor          = primary | PLUS_OP, primary | MINUS_OP, primary;
 primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;`;
 
+
 const ExpressionVisitor = () => {
 
     // Initial state
