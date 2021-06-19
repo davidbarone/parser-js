@@ -1,6 +1,65 @@
 # @dbarone/parser
 A Javascript version of [a simple C# lexer and parser](https://github.com/davidbarone/parser). The source code for this JavaScript version is available from https://github.com/davidbarone/parser-js.
 
+## Getting Started
+Download the package from the npm repository via the CLI:
+
+```
+npm install @dbarone/parser
+```
+
+Then, add the following into your script:
+
+``` javascript
+let { Parser } = require("@dbarone/parser");
+
+const fooBarBazGrammar = () => {
+  return `
+    FOO     = "FOO";
+    BAR     = "BAR";
+    BAZ     = "BAZ";
+    fb      = :FOO,:BAR*;
+    fbb     = ITEMS:fb,ITEMS:BAZ*;`;
+};
+
+const fooBarBazVisitor = () => {
+  let state = {};
+  let tokens = [];
+  state["items"] = tokens;
+
+  let visitor = new Visitor(state);
+
+  visitor.addVisitor("fbb", (v, n) => {
+    v.state.items = n.properties["ITEMS"];
+  });
+
+  return visitor;
+};
+
+let parser = new Parser(fooBarBazGrammar(), "fbb", (sender, args) => {});
+let node = parser.parse("FOOBARBARBARBAZ");
+console.log(node.prettyPrint());
+```
+
+Run the script:
+
+```
+node ./src/index.js
+```
+
+You should see a simple abstract syntax tree generated in the console:
+
+```
++- fbb
+   +- "ITEMS" FOO [FOO]
+   +- "ITEMS" BAR [BAR]
+   +- "ITEMS" BAR [BAR]
+   +- "ITEMS" BAR [BAR]
+   +- "ITEMS" BAZ [BAZ]
+```
+
+If you've got this, then congratulations, you've created your first parser. Read on to find out how to can use this package to create parsers for all kinds of languages and DSLs.
+
 ## Summary
 This is a top-down brute-force left-recursion, leftmost derivation parser with single token lookahead, i.e. a LL(1) parser,  with backtracking, which will parse context-free grammars. It is a very simplistic parser and intended for simple grammars or DSLs. The parser takes an input and can provide the following services:
 - Lexically analyse the input into a series of tokens (tokenising)
