@@ -1,5 +1,5 @@
 # @dbarone/parser
-A Javascript version of [a simple C# lexer and parser](https://github.com/davidbarone/parser). The source code for this JavaScript version is available from https://github.com/davidbarone/parser-js.
+A Javascript version of [a simple C# lexer and parser](https://github.com/davidbarone/parser). The source code for this JavaScript version is available from https://github.com/davidbarone/parser-js. The npm package can be accessed from: https://www.npmjs.com/package/@dbarone/parser.
 
 ## Getting Started
 Download the package from the npm repository via the CLI:
@@ -61,12 +61,12 @@ You should see a simple abstract syntax tree generated in the console:
 If you've got this, then congratulations, you've created your first parser. Read on to find out how to can use this package to create parsers for all kinds of languages and DSLs.
 
 ## Summary
-This is a top-down brute-force left-recursion, leftmost derivation parser with single token lookahead, i.e. a LL(1) parser,  with backtracking, which will parse context-free grammars. It is a very simplistic parser and intended for simple grammars or DSLs. The parser takes an input and can provide the following services:
+This is a parser generator that can generate LL(1) parsers, i.e. left-recursion, leftmost derivation parsers with single token lookahead. The generated parsers work in a brute-force fashion, with backtracking, and will parse context-free grammars. It is a very simplistic parser generator, and is intended for generating simple grammars or domain-specific languages (DSLs). The following services are provided:
 - Lexically analyse the input into a series of tokens (tokenising)
-- Parse the tokens into an abstract syntax tree (parsing), or
-- Navigation through the abstract syntax tree, using a visitor class.
+- Parse the tokens into an abstract syntax tree (parsing)
+- Navigating through the abstract syntax tree, using a visitor class
 
-The target use case for this parser is for processing inputs that are slightly too complex for regular expressions alone, and where the user does not want the overhead of an industrial strength or commercial parser toolkit. The benefits of this parser are:
+The target use case for this parser generator is for processing inputs that are slightly too complex for regular expressions alone, and where the user does not want the overhead of an industrial strength or commercial parser toolkit. The benefits of this parser generator are:
 - Extremely small / simple to understand
 - Does not require any build-time code generation tasks.
 
