@@ -190,11 +190,11 @@ Then the input gets parsed into a tree as follows:
    |    |    |
   FOO  PLUS BAR
 ```
-In general, a non-terminal node is represented using the `Node` class, and terminal / leaf nodes are represented using the `Token` class. The `Name` property provides the name of non-terminal nodes, and the `TokenName` property provides the name of tokens (the `TokenValue` provides the actual value of a token). This is the default behaviour without specifying any aliases or modification rules.
+In general, a non-terminal node is represented using the `Node` class, and terminal / leaf nodes are represented using the `Token` class. The `name` property provides the name of non-terminal nodes, and the `tokenName` property provides the name of tokens (the `tokenValue` provides the actual value of a token). This is the default behaviour without specifying any aliases or modification rules.
 
-In the above example, FOO, PLUS, BAR, and BAZ are all represented by `Token` objects. Each `Node` object contains a `Properties` dictionary which provides access to the child / leaf nodes. By default, the key of each property is the same as the child name. Therefore, to access the input value "FOO" in the tree, you would use:
+In the above example, FOO, PLUS, BAR, and BAZ are all represented by `Token` objects. Each `Node` object contains a `properties` object which provides access to the child / leaf nodes. By default, the key of each property is the same as the child name. Therefore, to access the input value "FOO" in the tree, you would use:
 
-`fbb.Properties["fb"].Properties["FOO"].TokenValue`
+`fbb.properties["fb"].properties["FOO"].tokenValue`
 
 ### Ignoring Items
 Sometimes you need to manipulate the tree. The first way to manipulate the tree is by ignoring nodes. In the example above, the PLUS symbols don't really add much semantics to the tree. We can have the parser remove these completely, by changing the grammar to:
@@ -259,7 +259,7 @@ fbb     = fb,PLUS!,BAZ;
         |
         FB
 ```
-In this case, the object referenced at `fbb.Properties["fb"].Properties["FB"]` is of type `IEnumerable<Token>` and contains both FOO and BAR.
+In this case, the object referenced at `fbb.properties["fb"].properties["FB"]` is of type `Token[]` and contains both FOO and BAR.
 
 A special renaming case is to use a blank name, for example:
 ```
@@ -278,7 +278,7 @@ Here, for the 'fb' rule, we've removed the aliases, but kept the colon (read as:
         |           |
         fb         BAZ
 ```
-In this example, the IEnumerable<Token> object has been collapsed up the tree, and is now referenced at `fbb.Properties["fb"]`.
+In this example, the `Token[]` object has been collapsed up the tree, and is now referenced at `fbb.properties["fb"]`.
 
 *Note that a constraint exists that a rule must not contain a mixture of blank/non blank aliases. If a blank alias is specified, then ALL symbols in the rule must also have a blank alias.*
 
@@ -297,7 +297,7 @@ Results in the tree being flattened further:
               |
             ITEMS 
 ```
-In this case, the ITEMS node (referenced by `fbb.Properties["ITEMS"] contains a collection of the 3 items, ['FOO', 'BAR', 'BAZ']).
+In this case, the ITEMS node (referenced by `fbb.properties["ITEMS"]` contains a collection of the 3 items, ['FOO', 'BAR', 'BAZ']).
 
 ### Optional Modifier
 Another modifier is the 'optional' modifier (? or *). These allow input to be optional. For example, changing the original grammar to:
@@ -337,7 +337,7 @@ FOO++BAZ
 FOO+BARBAR+BAZ
 FOO+BARBARBAR+BAZ
 ```
-When a symbol is modified with the 'many' modifiers, they still occupy a single node or child property in the tree. However, the contents of the node becomes an `IEnumerable` which can be iterated over.
+When a symbol is modified with the 'many' modifiers, they still occupy a single node or child property in the tree. However, the contents of the node becomes an Array object which can be iterated over.
 
 ## Ordering of rules
 the order of rules is important. As the parser adopts a brute force approach, it will continue looking for matching rules until the first match. Subsequent rules will be ignored. If a failure occurs at a nested position, the parser will backtrack from the point of failure, and continue looking for matching rules. If all paths are attempted without a match, parsing of the input fails.
@@ -347,7 +347,7 @@ The JavaScript version of the parser does **not** support left recursion. A rule
 
 `a = a b | C;`
 
-However, the parser supports repeated rules, and the left-recursive grammar shown above can be easily rewritten thus:
+However, the parser supports repeated (many) rules, and the left-recursive grammar shown above can be easily rewritten thus:
 
 `a : C b*`
 
@@ -359,23 +359,23 @@ The abstract syntax tree structure uses `Node` objects to represent non-terminal
 ## Processing a Tree Using the Visitor Class
 A `Visitor` class is included which allows for an abstract syntax tree to be processed. A new visitor is created using:
 
-`var visitor = new Visitor(initialState)`
+`let visitor = new Visitor(initialState)`
 
-The `initialState` parameter is a `dynamic` object, providing any initial state to the tree processing function. Visitor handlers are then added. A visitor typically processes a portion of the tree:
+The `initialState` parameter is used to provide any initial state to the tree processing function. Visitor handlers are then added. A visitor typically processes a portion of the tree:
 
-`visitor.AddVisitor(ruleName, (visitor, node)=> {...});`
+`visitor.addVisitor(ruleName, (visitor, node)=> {...});`
 
 The first parameter is the name of the rule which is processed by the handler. The second parameter is a function which takes 2 parameters:
 - The `Visitor` class
-- The current node being evaluated
+- The current `Node` object being evaluated
 The body of this function is then free to process the node in any way.
 
-State can be persisted across handlers by using the `Visitor.State` property.
+State can be persisted across handlers by using the `state` property.
 
 Visitors do not need to be written for every rule / node type. By default if no visitor is found for a node, the default behaviour is for the engine to recursively visit every node property within the parent node. 
 
 ## Debugging
-The `Parser` class exposes a property `LogHandler` which if specified, enables the caller to output logging information related to the parsing algorithm.
+The `Parser` class exposes a property `logHandler` which if specified, enables the caller to output logging information related to the parsing algorithm.
 
 Additionally, a pretty-print extension method is available to display the abstract syntax tree in a user-friendly format. The tree can be displayed for any root node by calling:
 
@@ -386,6 +386,7 @@ For example, using the SQL-ish grammar example (included in the unit tests), an 
 `(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')`
 
 Generates a tree as follows:
+
 ```
 +- search_condition
    +- boolean_term
@@ -409,12 +410,12 @@ Generates a tree as follows:
                   +- "OPERATOR" EQ_OP [EQ]
                   +- "RHV" LITERAL_STRING ['Italy']
 ```
+
 ## Unit Tests
 A set of unit tests is included in the project. As well as testing the accuracy of the system, these tests show how the parser is used. Test examples include:
-- **FooBarBazTests**: A very simple grammar.
 - **ExpressionTests**: A simple numeric expression parser for +,-,*,/ operators as well as parentheses.
-- **SubRuleTests**: A version of the ExpressionTests grammar using subrules
-- **LeftRecursionTests**: A version of the ExpressionTests grammar using left recursion (experimental).
+- **FooBarBazTests**: A very simple grammar.
 - **SqlishTests**: A simple SQL-like grammar.
+- **SubRuleTests**: A version of the ExpressionTests grammar using subrules
 
 --- end ---
