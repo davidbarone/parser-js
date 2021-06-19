@@ -1,6 +1,6 @@
 {
   "name": "@dbarone/parser",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A simple JavaScript parser",
   "main": "dist/Parser.js",
   "types": "dist/Parser.d.ts",
