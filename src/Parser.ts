@@ -207,14 +207,14 @@ export class Parser implements ILoggable {
         throw (`Syntax error near ${input.substr(0, 20)}...`);
     }
 
-    parse(input: string, throwOnFailure: boolean = true): Node | null {
+    parse(input: string): Node {
         if (!input)
-            return null;
+            throw ("No input to parse.");
 
         var tokens = this.tokenise(input);
 
         if (tokens == null || tokens.length == 0)
-            throw ("input yields no tokens!");
+            throw ("input yields no tokens.");
 
         // find any matching production rules.
         var rules = this.productionRules.filter(p => this.rootProductionRule == null || p.name.toLowerCase() === this.rootProductionRule.toLowerCase());
@@ -235,15 +235,10 @@ export class Parser implements ILoggable {
         }
 
         // should not get here...
-        if (throwOnFailure)
-            throw "Input cannot be parsed.";
-        else
-            return null;
+        throw "Input cannot be parsed.";
     }
 
-    execute(node: Node | null, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
-        if (node == null)
-            return null;
+    execute(node: Node, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
 
         node.accept(visitors);
         var state = visitors.state;
@@ -251,5 +246,6 @@ export class Parser implements ILoggable {
             return state;
         else
             return resultMapping(state);
+
     }
 }

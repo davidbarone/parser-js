@@ -28,7 +28,7 @@ export class TestHarness {
         let rules: ProductionRule[] = parser.productionRules;
 
         if (input) {
-            let ast: Node | null = parser.parse(input, true);
+            let ast: Node = parser.parse(input);
             if (visitor !== null) {
                 let actual = parser.execute(ast, visitor, resultMapping);
                 return actual;

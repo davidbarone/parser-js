@@ -32,11 +32,10 @@ describe("Pretty Print test", () => {
 
     let input = "9+5";
     let parser: Parser = new Parser(subruleGrammar(), "expression", () => { });
-    let ast: Node | null = parser.parse(input, true);
+    let ast: Node = parser.parse(input);
     let actual: string = "";
-    if (ast !== null) {
-        actual = ast.prettyPrint();
-    }
+    actual = ast.prettyPrint();
+
     test("prettyprint test", () => {
         expect(actual).toEqual(expected);
     })
