@@ -78,7 +78,7 @@ The above grammar specifies an 'SQL-ish' grammar for constructing a 'filter' exp
 ## Internal Representation of Production Rules
 The BNF-ish grammar is converted internally to a collection of production rule objects each represented by the `ProductionRule` class. An example of how the production rules are generated internally is shown below:
 ```
-    private get BNFGrammar(): ProductionRule[] {
+    private get bnfGrammar(): ProductionRule[] {
         return [
             // Lexer Rules
             new ProductionRule("COMMENT", "([/][*]).*([*][/])"),    // comments 
