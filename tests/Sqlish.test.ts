@@ -1,8 +1,8 @@
-import { Stack } from "./Stack";
-import { Visitor } from "./Visitor";
-import { Token } from "./Token";
-import { Node } from "./Node";
-import { Parser } from "./Parser"
+import { TestHarness } from "./TestHarness";
+import { Stack } from "../src/Stack";
+import { Visitor } from "../src/Visitor";
+import { Token } from "../src/Token";
+import { Node } from "../src/Node";
 
 let data = [
     { name: 'john', age: 40, country: 'Australia', sex: 'M', rating: "A" },
@@ -48,7 +48,7 @@ LITERAL_NUMBER  = "[+-]?((\\d+(\\.\\d*)?)|(\\.\\d+))";
 IDENTIFIER      = "[a-zA-Z_][a-zA-Z_0-9]*";
 WHITESPACE      = "\\s+";
 
-/*Parser Rules */
+/*Parser Rules */k
 
 comparison_operator =   :EQ_OP | :NE_OP | :LT_OP | :LE_OP | :GT_OP | :GE_OP;
 comparison_operand  =   :LITERAL_STRING | :LITERAL_NUMBER | :IDENTIFIER;
@@ -111,7 +111,7 @@ const SqlishVisitor = () => {
             }
 
             v.State.FilterFunctions.push((row: any) => {
-                let match: boolean = true;
+                let match: boolean = false;
                 for (let func of funcs) {
                     if (!func(row)) {
                         match = false;
@@ -238,16 +238,22 @@ const SqlishVisitor = () => {
 
 let resultMapper = (state: any) => {
     let func = state.FilterFunctions.pop();
-    let filtered = data.filter(func);
-    return filtered.length;
+    return data.filter(func).length;
 }
 
-let input: string = "age BETWEEN 40 AND 60";
-let parser: Parser = new Parser(SqlishGrammar, "search_condition", (sender, args) => { });
-let tokens = parser.Tokenise(input);
-console.log(tokens);
-let ast: Node | null = parser.Parse(input)
-if (ast !== null) {
-    console.log(parser.Execute(ast, SqlishVisitor(), resultMapper));
-    console.log(ast.prettyPrint());
-}
+let expectedProductionRules: number = 46;   // above grammar should produce 46 production rules
+test("Check grammar built OK", () => {
+    expect(TestHarness.buildGrammar("Test", SqlishGrammar)).toEqual(expectedProductionRules);
+})
+
+describe("Sqlish data tests", () => {
+
+    test.each(
+        [
+            ["SQLISH_1", SqlishGrammar, "Age BETWEEN 40 AND 60", "search_condition", SqlishVisitor(), resultMapper, 4]
+        ]
+    )('%s', (name, grammar, input, rootProductionRule, visitor, resultMapping, expectedResult) => {
+        var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, resultMapping);
+        expect(result).toEqual(expectedResult);
+    });
+});

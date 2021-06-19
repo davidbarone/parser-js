@@ -31,14 +31,14 @@ export class Node {
                 for (let i = 0; i < size; i++) {
                     let childItem: any = child[i];
                     if (childItem instanceof Token) {
-                        output += `${indent}+- ${(childItem as Token).TokenName} [${(childItem as Token).TokenValue}]\n`;
+                        output += `${indent}+- \"${key}\" ${(childItem as Token).TokenName} [${(childItem as Token).TokenValue}]\n`;
                     } else {
                         output += (childItem as Node).prettyPrint(indent, i === size - 1);
                     }
                 }
             } else {
                 if (child instanceof Token) {
-                    output += `${indent}+- ${(child as Token).TokenName} [${(child as Token).TokenValue}]\n`;
+                    output += `${indent}+- \"${key}\" ${(child as Token).TokenName} [${(child as Token).TokenValue}]\n`;
                 } else {
                     output += (child as Node).prettyPrint(indent, key === lastKey);
                 }
