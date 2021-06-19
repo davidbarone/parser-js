@@ -21,13 +21,13 @@ describe("Pretty Print test", () => {
    +- term
    |  +- factor
    |     +- primary
-   |        +- NUMBER_LITERAL [9]
+   |        +- "NUMBER_LITERAL" NUMBER_LITERAL [9]
    +- anonymous_1
-      +- PLUS_OP [+]
+      +- "OP" PLUS_OP [+]
       +- term
          +- factor
             +- primary
-               +- NUMBER_LITERAL [5]
+               +- "NUMBER_LITERAL" NUMBER_LITERAL [5]
 `;
 
     let input = "9+5";

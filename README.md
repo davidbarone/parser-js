@@ -11,7 +11,7 @@ The target use case for this parser is for processing inputs that are slightly t
 - Extremely small / simple to understand
 - Does not require any build-time code generation tasks.
 
-Grammars are specified using a very friendly BNF-ish syntax which will be familiar to users of other parser toolkits. The `Parser` class provides the main functionality, and includes `Tokenise()` and `Parse()` methods.
+Grammars are specified using a very friendly BNF-ish syntax which will be familiar to users of other parser toolkits. The `Parser` class provides the main functionality, and includes `tokenise()`, `parse()`, and `execute()` methods.
 
 For processing the input (through an abstract syntax tree), a special `Visitor` class is provided. Hooks into different parts of the tree can be easily coded by creating visitor handlers (again, all this can be done directly from your code without any pre-processing code generation steps).
 
@@ -78,37 +78,37 @@ The above grammar specifies an 'SQL-ish' grammar for constructing a 'filter' exp
 ## Internal Representation of Production Rules
 The BNF-ish grammar is converted internally to a collection of production rule objects each represented by the `ProductionRule` class. An example of how the production rules are generated internally is shown below:
 ```
-private List<ProductionRule> BNFGrammar => new List<ProductionRule>
-{
-      // Lexer Rules
-      new ProductionRule("COMMENT", @"\/\*.*\*\/"),                     // comment
-      new ProductionRule("EQ", "="),                                    // definition
-      new ProductionRule("COMMA", "[,]"),                               // concatenation
-      new ProductionRule("COLON", "[:]"),                               // rewrite / aliasing
-      new ProductionRule("SEMICOLON", ";"),                             // termination
-      new ProductionRule("MODIFIER", "[?!+*]"),                         // modifies the symbol
-      new ProductionRule("OR", @"[|]"),                                 // alternation
-      new ProductionRule("QUOTEDLITERAL", @"""(?:[^""\\]|\\.)*"""),     // literal string
-      new ProductionRule("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9_']+"),       // identifier / label / alias
-      new ProductionRule("NEWLINE", "\n"),
-      new ProductionRule("LPAREN", @"\("),
-      new ProductionRule("RPAREN", @"\)"),
+    private get BNFGrammar(): ProductionRule[] {
+        return [
+            // Lexer Rules
+            new ProductionRule("COMMENT", "([/][*]).*([*][/])"),    // comments 
+            new ProductionRule("EQ", "="),                          // definition
+            new ProductionRule("COMMA", "[,]"),                     // concatenation
+            new ProductionRule("COLON", "[:]"),                     // rewrite / aliasing
+            new ProductionRule("SEMICOLON", ";"),                   // termination
+            new ProductionRule("MODIFIER", "[?!+*]"),               // modifies the symbol
+            new ProductionRule("OR", "[|]"),                       // alternation
+            new ProductionRule("QUOTEDLITERAL", '"(?:[^"]|\\.)*"'),
+            new ProductionRule("IDENTIFIER", "[a-zA-Z][a-zA-Z0-9_']+"),
+            new ProductionRule("NEWLINE", "\n"),
+            new ProductionRule("LPAREN", "[(]"),
+            new ProductionRule("RPAREN", "[)]"),
 
-      // Parser Rules
-      new ProductionRule("alias", ":IDENTIFIER?", ":COLON"),
-      new ProductionRule("subrule", "LPAREN!", ":parserSymbolsExpr", "RPAREN!"),
-      new ProductionRule("symbol", "ALIAS:alias?", "SUBRULE:subrule", "MODIFIER:MODIFIER?"),
-      new ProductionRule("symbol", "ALIAS:alias?", "IDENTIFIER:IDENTIFIER", "MODIFIER:MODIFIER?"),
-      new ProductionRule("parserSymbolTerm", ":symbol"),
-      new ProductionRule("parserSymbolFactor", "COMMA!", ":symbol"),
-      new ProductionRule("parserSymbolExpr", "SYMBOL:parserSymbolTerm", "SYMBOL:parserSymbolFactor*"),
-      new ProductionRule("parserSymbolsFactor", "OR!", ":parserSymbolExpr"),
-      new ProductionRule("parserSymbolsExpr", "ALTERNATE:parserSymbolExpr", "ALTERNATE:parserSymbolsFactor*"),
-
-      new ProductionRule("rule", "RULE:IDENTIFIER", "EQ!", "EXPANSION:QUOTEDLITERAL", "SEMICOLON!"),      // Lexer rule
-      new ProductionRule("rule", "RULE:IDENTIFIER", "EQ!", "EXPANSION:parserSymbolsExpr", "SEMICOLON!"),  // Parser rule
-      new ProductionRule("grammar", "RULES:rule+")
-};
+            // Parser Rules
+            new ProductionRule("alias", ":IDENTIFIER?", ":COLON"),
+            new ProductionRule("subrule", "LPAREN!", ":parserSymbolsExpr", "RPAREN!"),
+            new ProductionRule("symbol", "ALIAS:alias?", "SUBRULE:subrule", "MODIFIER:MODIFIER?"),
+            new ProductionRule("symbol", "ALIAS:alias?", "IDENTIFIER:IDENTIFIER", "MODIFIER:MODIFIER?"),
+            new ProductionRule("parserSymbolTerm", ":symbol"),
+            new ProductionRule("parserSymbolFactor", "COMMA!", ":symbol"),
+            new ProductionRule("parserSymbolExpr", "SYMBOL:parserSymbolTerm", "SYMBOL:parserSymbolFactor*"),
+            new ProductionRule("parserSymbolsFactor", "OR!", ":parserSymbolExpr"),
+            new ProductionRule("parserSymbolsExpr", "ALTERNATE:parserSymbolExpr", "ALTERNATE:parserSymbolsFactor*"),
+            new ProductionRule("rule", "RULE:IDENTIFIER", "EQ!", "EXPANSION:QUOTEDLITERAL", "SEMICOLON!"),      // Lexer rule
+            new ProductionRule("rule", "RULE:IDENTIFIER", "EQ!", "EXPANSION:parserSymbolsExpr", "SEMICOLON!"),  // Parser rule
+            new ProductionRule("grammar", "RULES:rule+")
+        ];
+    }
 ```
 (The above is actually the grammar for specifying the 'BNF-ish' grammar used by this tool)
 
@@ -118,7 +118,7 @@ Each line specifies an 'expansion' rule. Rules can be either:
 
 Rules are named using alpha-numeric characters, or the underscore character. Rule names must start with an alpha character. Lexer rules are defined as requiring an uppercase first character, and parser rules must start with a lower case character.
 
-Lexer rules define terminal symbols in the grammar. Every possible terminal symbol must be defined explicitly as a lexer rule (Parser rules cannot use literal symbols). Each lexer rule maps to a single literal expansion only. The expansion is written using a regex.
+Lexer rules define terminal symbols in the grammar. Every possible terminal symbol must be defined explicitly as a lexer rule (Parser rules cannot use literal symbols). Each lexer rule maps to a single literal expansion only. The expansion is written using a regex. For lexer rules, the ordering in the grammar is important. If a set of characters can be matched by 2 or more lexer rules, the most specific rule must be specified first.
 
 Parser rules define non-terminal symbols. Parser rules define expansions to a set of lexer rules or other parser rules. The general format of a parser symbol is:
 
@@ -166,7 +166,7 @@ On the downside, subrules get automatically generated in the grammar, and cannot
 The tokeniser uses regex expressions as rules. Any valid C# regex can be used. Note that every string token in your input must be defined as a lexer rule. There is no support for literal tokens defined in parser rules. All parser rules must reference either other parser rules, or lexer rules.
 
 ## Tree Generation and Rule Modifiers
-The result of the `Parser.Parse()` method is an abstract syntax tree. The structure of the tree is designed to be close to the grammar. for example, given a grammar:
+The result of the `Parser.parse()` method is an abstract syntax tree. The structure of the tree is designed to be close to the grammar. for example, given a grammar:
 ```
 FOO     = "FOO";
 BAR     = "BAR";
@@ -379,11 +379,11 @@ The `Parser` class exposes a property `LogHandler` which if specified, enables t
 
 Additionally, a pretty-print extension method is available to display the abstract syntax tree in a user-friendly format. The tree can be displayed for any root node by calling:
 
-`node.PrettyPrint("", true);`
+`node.prettyPrint();`
 
 For example, using the SQL-ish grammar example (included in the unit tests), an input of:
 
-`(LEVEL_2 EQ '2' AND LEVEL_3 NE 4) OR (LEVEL_4 EQ 'Z' AND LEVEL_5 NE 123)`
+`(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')`
 
 Generates a tree as follows:
 ```
@@ -393,25 +393,21 @@ Generates a tree as follows:
    |     +- search_condition
    |        +- boolean_term
    |           +- comparison_predicate
-   |           |  +- IDENTIFIER [LEVEL_2]
-   |           |  +- EQ_OP [EQ]
-   |           |  +- LITERAL_STRING ['2']
+   |           |  +- "LHV" IDENTIFIER [country]
+   |           |  +- "OPERATOR" EQ_OP [EQ]
+   |           |  +- "RHV" LITERAL_STRING ['UK']
    |           +- comparison_predicate
-   |              +- IDENTIFIER [LEVEL_3]
-   |              +- NE_OP [NE]
-   |              +- LITERAL_NUMBER [4]
+   |              +- "LHV" IDENTIFIER [sex]
+   |              +- "OPERATOR" EQ_OP [EQ]
+   |              +- "RHV" LITERAL_STRING ['F']
    +- boolean_term
       +- boolean_primary
          +- search_condition
             +- boolean_term
                +- comparison_predicate
-               |  +- IDENTIFIER [LEVEL_4]
-               |  +- EQ_OP [EQ]
-               |  +- LITERAL_STRING ['Z']
-               +- comparison_predicate
-                  +- IDENTIFIER [LEVEL_5]
-                  +- NE_OP [NE]
-                  +- LITERAL_NUMBER [123]
+                  +- "LHV" IDENTIFIER [country]
+                  +- "OPERATOR" EQ_OP [EQ]
+                  +- "RHV" LITERAL_STRING ['Italy']
 ```
 ## Unit Tests
 A set of unit tests is included in the project. As well as testing the accuracy of the system, these tests show how the parser is used. Test examples include:

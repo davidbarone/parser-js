@@ -12,7 +12,7 @@ let data = [
     { name: 'tony', age: 18, country: 'Canada', sex: 'M', rating: "B" },
     { name: 'mark', age: 35, country: 'Germany', sex: 'M', rating: "C" },
     { name: 'david', age: 37, country: 'Italy', sex: 'M', rating: "C" },
-    { name: 'jane', age: 52, country: 'USA', sex: 'F' },
+    { name: 'jane', age: 52, country: 'USA', sex: 'F', rating: "" },
     { name: 'sarah', age: 55, country: 'UK', sex: 'F', rating: "A" },
     { name: 'sue', age: 61, country: 'Italy', sex: 'F', rating: "C" },
     { name: 'alice', age: 76, country: 'France', sex: 'F', rating: "B" },
@@ -148,7 +148,7 @@ const SqlishVisitor = () => {
             let values: string[] = (n.Properties["LHV"] as string[]);
 
             let operatorTokenName: string = (n.Properties["OPERATOR"] as Token).TokenName;
-            let value: string = (n.Properties["RHV"] as Token).TokenValue;
+            let value: string = (n.Properties["RHV"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             v.State.FilterFunctions.push((row: any) => {
                 let match: boolean = false;
@@ -183,11 +183,12 @@ const SqlishVisitor = () => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
             let values: string[] = (n.Properties["LHV"] as string[]);
+            values = values.map(v => v.replace(new RegExp("'", 'g'), ""));
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => !values.includes(row[column]));
+                v.State.FilterFunctions.push((row: any) => { return !values.includes(row[column]) });
             else
-                v.State.FilterFunctions.push((row: any) => values.includes(row[column]));
+                v.State.FilterFunctions.push((row: any) => { return values.includes(row[column]) });
         }
     );
 
@@ -196,13 +197,13 @@ const SqlishVisitor = () => {
         (v, n) => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
-            let value1: string = (n.Properties["OP1"] as Token).TokenValue;
-            let value2: string = (n.Properties["OP2"] as Token).TokenValue;
+            let value1: string = (n.Properties["OP1"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
+            let value2: string = (n.Properties["OP2"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => !(row[column] >= value1 && row[column] <= value2));
+                v.State.FilterFunctions.push((row: any) => { return !(row[column] >= value1 && row[column] <= value2) });
             else
-                v.State.FilterFunctions.push((row: any) => row[column] >= value1 && row[column] <= value2);
+                v.State.FilterFunctions.push((row: any) => { return row[column] >= value1 && row[column] <= value2 });
         }
     );
 
@@ -211,12 +212,12 @@ const SqlishVisitor = () => {
         (v, n) => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
-            let value: string = (n.Properties["RHV"] as Token).TokenValue;
+            let value: string = (n.Properties["RHV"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => row[column].toString().includes(value));
+                v.State.FilterFunctions.push((row: any) => { return !row[column].toString().includes(value) });
             else
-                v.State.FilterFunctions.push((row: any) => !row[column].toString().includes(value));
+                v.State.FilterFunctions.push((row: any) => { return row[column].toString().includes(value) });
         }
     );
 
@@ -227,9 +228,9 @@ const SqlishVisitor = () => {
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => row[column]);
+                v.State.FilterFunctions.push((row: any) => { return row[column] == true });
             else
-                v.State.FilterFunctions.push((row: any) => !row[column]);
+                v.State.FilterFunctions.push((row: any) => { return row[column] == false });
         }
     );
 
@@ -242,9 +243,10 @@ let resultMapper = (state: any) => {
     return filtered.length;
 }
 
-let input: string = "age BETWEEN 40 AND 60";
+let input: string = "(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')";
 let parser: Parser = new Parser(SqlishGrammar, "search_condition", (sender, args) => { });
 let tokens = parser.Tokenise(input);
+
 console.log(tokens);
 let ast: Node | null = parser.Parse(input)
 if (ast !== null) {

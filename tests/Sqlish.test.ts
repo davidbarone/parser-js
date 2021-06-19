@@ -12,7 +12,7 @@ let data = [
     { name: 'tony', age: 18, country: 'Canada', sex: 'M', rating: "B" },
     { name: 'mark', age: 35, country: 'Germany', sex: 'M', rating: "C" },
     { name: 'david', age: 37, country: 'Italy', sex: 'M', rating: "C" },
-    { name: 'jane', age: 52, country: 'USA', sex: 'F' },
+    { name: 'jane', age: 52, country: 'USA', sex: 'F', rating: "" },
     { name: 'sarah', age: 55, country: 'UK', sex: 'F', rating: "A" },
     { name: 'sue', age: 61, country: 'Italy', sex: 'F', rating: "C" },
     { name: 'alice', age: 76, country: 'France', sex: 'F', rating: "B" },
@@ -48,7 +48,7 @@ LITERAL_NUMBER  = "[+-]?((\\d+(\\.\\d*)?)|(\\.\\d+))";
 IDENTIFIER      = "[a-zA-Z_][a-zA-Z_0-9]*";
 WHITESPACE      = "\\s+";
 
-/*Parser Rules */k
+/*Parser Rules */
 
 comparison_operator =   :EQ_OP | :NE_OP | :LT_OP | :LE_OP | :GT_OP | :GE_OP;
 comparison_operand  =   :LITERAL_STRING | :LITERAL_NUMBER | :IDENTIFIER;
@@ -111,7 +111,7 @@ const SqlishVisitor = () => {
             }
 
             v.State.FilterFunctions.push((row: any) => {
-                let match: boolean = false;
+                let match: boolean = true;
                 for (let func of funcs) {
                     if (!func(row)) {
                         match = false;
@@ -148,7 +148,7 @@ const SqlishVisitor = () => {
             let values: string[] = (n.Properties["LHV"] as string[]);
 
             let operatorTokenName: string = (n.Properties["OPERATOR"] as Token).TokenName;
-            let value: string = (n.Properties["RHV"] as Token).TokenValue;
+            let value: string = (n.Properties["RHV"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             v.State.FilterFunctions.push((row: any) => {
                 let match: boolean = false;
@@ -183,11 +183,12 @@ const SqlishVisitor = () => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
             let values: string[] = (n.Properties["LHV"] as string[]);
+            values = values.map(v => v.replace(new RegExp("'", 'g'), ""));
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => !values.includes(row[column]));
+                v.State.FilterFunctions.push((row: any) => { return !values.includes(row[column]) });
             else
-                v.State.FilterFunctions.push((row: any) => values.includes(row[column]));
+                v.State.FilterFunctions.push((row: any) => { return values.includes(row[column]) });
         }
     );
 
@@ -196,13 +197,13 @@ const SqlishVisitor = () => {
         (v, n) => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
-            let value1: string = (n.Properties["OP1"] as Token).TokenValue;
-            let value2: string = (n.Properties["OP2"] as Token).TokenValue;
+            let value1: string = (n.Properties["OP1"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
+            let value2: string = (n.Properties["OP2"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => !(row[column] >= value1 && row[column] <= value2));
+                v.State.FilterFunctions.push((row: any) => { return !(row[column] >= value1 && row[column] <= value2) });
             else
-                v.State.FilterFunctions.push((row: any) => row[column] >= value1 && row[column] <= value2);
+                v.State.FilterFunctions.push((row: any) => { return row[column] >= value1 && row[column] <= value2 });
         }
     );
 
@@ -211,12 +212,12 @@ const SqlishVisitor = () => {
         (v, n) => {
             let not: boolean = "NOT" in n.Properties;
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
-            let value: string = (n.Properties["RHV"] as Token).TokenValue;
+            let value: string = (n.Properties["RHV"] as Token).TokenValue.replace(new RegExp("'", 'g'), "");
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => row[column].toString().includes(value));
+                v.State.FilterFunctions.push((row: any) => { return !row[column].toString().includes(value) });
             else
-                v.State.FilterFunctions.push((row: any) => !row[column].toString().includes(value));
+                v.State.FilterFunctions.push((row: any) => { return row[column].toString().includes(value) });
         }
     );
 
@@ -227,9 +228,9 @@ const SqlishVisitor = () => {
             let column: string = (n.Properties["LHV"] as Token).TokenValue;
 
             if (not)
-                v.State.FilterFunctions.push((row: any) => row[column]);
+                v.State.FilterFunctions.push((row: any) => { return row[column] == true });
             else
-                v.State.FilterFunctions.push((row: any) => !row[column]);
+                v.State.FilterFunctions.push((row: any) => { return row[column] == false });
         }
     );
 
@@ -238,7 +239,8 @@ const SqlishVisitor = () => {
 
 let resultMapper = (state: any) => {
     let func = state.FilterFunctions.pop();
-    return data.filter(func).length;
+    let filtered = data.filter(func);
+    return filtered.length;
 }
 
 let expectedProductionRules: number = 46;   // above grammar should produce 46 production rules
@@ -250,7 +252,14 @@ describe("Sqlish data tests", () => {
 
     test.each(
         [
-            ["SQLISH_1", SqlishGrammar, "Age BETWEEN 40 AND 60", "search_condition", SqlishVisitor(), resultMapper, 4]
+            ["SQLISH_1", SqlishGrammar, "age BETWEEN 40 AND 60", "search_condition", SqlishVisitor(), resultMapper, 6],
+            ["SQLISH_2", SqlishGrammar, "age EQ 26", "search_condition", SqlishVisitor(), resultMapper, 1],
+            ["SQLISH_3", SqlishGrammar, "rating ISBLANK", "search_condition", SqlishVisitor(), resultMapper, 1],
+            ["SQLISH_4", SqlishGrammar, "sex EQ 'F'", "search_condition", SqlishVisitor(), resultMapper, 7],
+            ["SQLISH_5", SqlishGrammar, "name CONTAINS 's'", "search_condition", SqlishVisitor(), resultMapper, 2],
+            ["SQLISH_6", SqlishGrammar, "name NOT CONTAINS 's'", "search_condition", SqlishVisitor(), resultMapper, 14],
+            ["SQLISH_7", SqlishGrammar, "country EQ 'UK' OR name EQ 'david'", "search_condition", SqlishVisitor(), resultMapper, 4],
+            ["SQLISH_8", SqlishGrammar, "(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')", "search_condition", SqlishVisitor(), resultMapper, 3],
         ]
     )('%s', (name, grammar, input, rootProductionRule, visitor, resultMapping, expectedResult) => {
         var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, resultMapping);
