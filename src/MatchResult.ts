@@ -1,5 +1,5 @@
 export class MatchResult {
-    Success: boolean = false;
-    Matched: string | null = null;
-    Remainder: string | null = null;
+    success: boolean = false;
+    matched: string | null = null;
+    remainder: string | null = null;
 }

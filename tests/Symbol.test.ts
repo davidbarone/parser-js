@@ -7,7 +7,7 @@ import { MatchResult } from "../src/MatchResult"
 
 function symbolMatch(pattern: string, input: string): MatchResult {
     let s: Symbol = new Symbol(pattern, RuleType.LexerRule);
-    return s.Match(input);
+    return s.match(input);
 }
 
 describe("Symbol match", () => {
@@ -29,10 +29,10 @@ The input is multiple lines.`, false, null, null]
 
     ])("Pattern: %s, input: %s, match: %s", (pattern: string, input: string, expectedSuccess: boolean, expectedMatched: string | null, expectedRemainder: string | null) => {
         var result = symbolMatch(pattern, input);
-        expect(result.Success).toBe(expectedSuccess);
+        expect(result.success).toBe(expectedSuccess);
         if (expectedSuccess) {
-            expect(result.Matched).toEqual(expectedMatched);
-            expect(result.Remainder).toEqual(expectedRemainder);
+            expect(result.matched).toEqual(expectedMatched);
+            expect(result.remainder).toEqual(expectedRemainder);
         }
     });
 

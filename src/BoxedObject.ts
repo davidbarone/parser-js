@@ -1,15 +1,15 @@
 export class BoxedObject<Type> {
-    private inner: Type | null = null;
+    private _inner: Type | null = null;
 
     constructor(value: Type | null = null) {
-        this.inner = value;
+        this._inner = value;
     }
 
-    set Inner(value: Type | null) {
-        this.inner = value;
+    set inner(value: Type | null) {
+        this._inner = value;
     }
 
-    get Inner(): Type | null {
-        return this.inner;
+    get inner(): Type | null {
+        return this._inner;
     }
 }

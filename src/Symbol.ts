@@ -9,23 +9,23 @@ import { LogType } from "./LogType"
 
 export class Symbol implements ILoggable {
 
-    Alias: string;
-    Name: string;
-    Optional: boolean;
-    Many: boolean;
-    Ignore: boolean;
-    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
+    alias: string;
+    name: string;
+    optional: boolean;
+    many: boolean;
+    ignore: boolean;
+    logHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
 
     constructor(value: string, ruleType: RuleType) {
         let name: string = value;
         let modifier: string | null = null;
         let parts: Array<string> | null = null;
 
-        this.Alias = "";
+        this.alias = "";
         if (ruleType === RuleType.ParserRule) {
             parts = name.split(":");
             if (parts.length > 1) {
-                this.Alias = parts[0];
+                this.alias = parts[0];
                 name = parts[1];
             }
 
@@ -39,85 +39,85 @@ export class Symbol implements ILoggable {
             }
         }
 
-        this.Name = name;
+        this.name = name;
         if (parts == null || parts.length == 1)
-            this.Alias = this.Name;
+            this.alias = this.name;
 
-        this.Optional = modifier == "?" || modifier == "*";
-        this.Many = modifier == "+" || modifier == "*";
-        this.Ignore = modifier == "!";
+        this.optional = modifier == "?" || modifier == "*";
+        this.many = modifier == "+" || modifier == "*";
+        this.ignore = modifier == "!";
     }
 
     /**
      * The regexp pattern used by this class to test input.
      */
-    get MatchPattern(): string {
-        let pattern = `^[\\s]*(?<match>(${this.Name}))(?<remainder>([\\s\\S]*))[\\s]*$`;
+    get matchPattern(): string {
+        let pattern = `^[\\s]*(?<match>(${this.name}))(?<remainder>([\\s\\S]*))[\\s]*$`;
         return pattern;
     }
 
-    Match(input: string): MatchResult {
-        let re: RegExp = new RegExp(this.MatchPattern);
+    match(input: string): MatchResult {
+        let re: RegExp = new RegExp(this.matchPattern);
 
         if (re.test(input)) {
             let match = re.exec(input) as RegExpExecArray;
             let groups = match.groups as { [key: string]: string };
             return {
-                Success: true,
-                Matched: groups["match"],
-                Remainder: groups["remainder"]
+                success: true,
+                matched: groups["match"],
+                remainder: groups["remainder"]
             }
         } else {
             return {
-                Success: false,
-                Matched: "",
-                Remainder: input
+                success: false,
+                matched: "",
+                remainder: input
             }
         }
     }
 
-    IsMatch(input: string): boolean {
-        let re: RegExp = new RegExp(this.MatchPattern);
+    isMatch(input: string): boolean {
+        let re: RegExp = new RegExp(this.matchPattern);
         return re.test(input);
     }
 
-    Parse(context: ParserContext) {
+    parse(context: ParserContext) {
 
-        this.LogHandler(this,
+        this.logHandler(this,
             {
-                LogType: LogType.BEGIN,
-                NestingLevel: context.CurrentProductionRule.size(),
-                Message: `Token Index: ${context.CurrentTokenIndex}, Results: ${context.Results.size()}, Symbol=${this.Name}, Next Token=[${context.PeekToken().TokenName} - \"${context.PeekToken().TokenValue}\"]`
+                logType: LogType.Begin,
+                nestingLevel: context.currentProductionRule.size(),
+                message: `Token Index: ${context.currentTokenIndex}, Results: ${context.results.size()}, Symbol=${this.name}, Next Token=[${context.peekToken().tokenName} - \"${context.peekToken().tokenValue}\"]`
             });
 
-        let temp: number = context.CurrentTokenIndex;
+        let temp: number = context.currentTokenIndex;
         let ok: boolean = false;
         let once: boolean = false;
 
-        if (this.Optional && context.TokenEOF) {
+        if (this.optional && context.tokenEOF) {
             return true;
         }
         else {
             while (true) {
                 let token: Token | null = null;
-                if (!context.TokenEOF) {
-                    token = context.TryToken(this.Name);
+                if (!context.tokenEOF) {
+                    token = context.tryToken(this.name);
                 }
 
                 if (token != null) {
                     // terminal
                     ok = true;
-                    if (!this.Ignore)
-                        context.UpdateResult(this.Alias, token);
+                    if (!this.ignore)
+                        context.updateResult(this.alias, token);
                 }
                 // check to see if the symbol a pointer to another production rule?
                 // if so, add new item onto stack.
                 else {
                     // non terminal
                     var rules = context
-                        .ProductionRules
-                        .filter(r => r.RuleType == RuleType.ParserRule)
-                        .filter(r => r.Name.toLowerCase() === this.Name.toLowerCase());
+                        .productionRules
+                        .filter(r => r.ruleType == RuleType.ParserRule)
+                        .filter(r => r.name.toLowerCase() === this.name.toLowerCase());
 
                     if (rules.length == 0) {
                         break;
@@ -125,12 +125,12 @@ export class Symbol implements ILoggable {
 
                     for (let i = 0; i < rules.length; i++) {
                         let rule = rules[i];
-                        rule.LogHandler = this.LogHandler;
+                        rule.logHandler = this.logHandler;
                         let obj: BoxedObject<object> = new BoxedObject<object>();
-                        ok = rule.Parse(context, obj);
+                        ok = rule.parse(context, obj);
                         if (ok) {
-                            if (!this.Ignore)
-                                context.UpdateResult(this.Alias, obj.Inner as Object);
+                            if (!this.ignore)
+                                context.updateResult(this.alias, obj.inner as Object);
                             break;
                         }
                     }
@@ -139,25 +139,25 @@ export class Symbol implements ILoggable {
                 // wind back the token index if the symbol did not match tokens.
                 if (ok) {
                     once = true;
-                    if (!this.Many)
+                    if (!this.many)
                         break;
                 }
                 else {
                     if (!once)
-                        context.CurrentTokenIndex = temp;
+                        context.currentTokenIndex = temp;
                     break;
                 }
             }
         }
 
         // return true if match (at least once).
-        var success = ok || once || this.Optional;
+        var success = ok || once || this.optional;
 
-        this.LogHandler(this,
+        this.logHandler(this,
             {
-                LogType: success ? LogType.SUCCESS : LogType.FAILURE,
-                NestingLevel: context.CurrentProductionRule.size(),
-                Message: `"Token Index: ${context.CurrentTokenIndex}, Results: ${context.Results.size()}, Symbol=${this.Name}, Next Token=[${context.PeekToken().TokenName} - \"${context.PeekToken().TokenValue}\"]`
+                logType: success ? LogType.Success : LogType.Failure,
+                nestingLevel: context.currentProductionRule.size(),
+                message: `"Token Index: ${context.currentTokenIndex}, Results: ${context.results.size()}, Symbol=${this.name}, Next Token=[${context.peekToken().tokenName} - \"${context.peekToken().tokenValue}\"]`
             });
 
         return success;

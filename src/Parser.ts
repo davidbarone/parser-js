@@ -10,13 +10,13 @@ import { LogArgs } from "./LogArgs"
 import { LogType } from "./LogType"
 
 export class Parser implements ILoggable {
-    Grammar: string = "";
-    RootProductionRule: string = "";
-    ProductionRules: ProductionRule[] = [];
-    IgnoreTokens: string[] = [];
-    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
+    grammar: string = "";
+    rootProductionRule: string = "";
+    productionRules: ProductionRule[] = [];
+    ignoreTokens: string[] = [];
+    logHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
 
-    private get BNFGrammar(): ProductionRule[] {
+    private get bnfGrammar(): ProductionRule[] {
         return [
             // Lexer Rules
             new ProductionRule("COMMENT", "([/][*]).*([*][/])"),    // comments 
@@ -48,37 +48,37 @@ export class Parser implements ILoggable {
         ];
     }
 
-    private get BNFVisitor(): Visitor {
+    private get bnfVisitor(): Visitor {
 
         // Initial state
         let state: any = {};
-        state.ProductionRules = [] as ProductionRule[];
-        state.CurrentRule = "";
-        state.SubRules = 0;
+        state.productionRules = [] as ProductionRule[];
+        state.currentRule = "";
+        state.subRules = 0;
         var visitor = new Visitor(state);
 
-        visitor.AddVisitor(
+        visitor.addVisitor(
             "grammar",
             (v, n) => {
-                let rulesObject: Node[] = n.Properties["RULES"] as Node[];
+                let rulesObject: Node[] = n.properties["RULES"] as Node[];
                 for (let node of rulesObject) {
-                    node.Accept(v);
+                    node.accept(v);
                 }
             });
 
-        visitor.AddVisitor(
+        visitor.addVisitor(
             "rule",
             (v, n) => {
-                let token: Token = n.Properties["RULE"] as Token;
-                let rule: string = token.TokenValue;
-                let expansion: any = n.Properties["EXPANSION"];
+                let token: Token = n.properties["RULE"] as Token;
+                let rule: string = token.tokenValue;
+                let expansion: any = n.properties["EXPANSION"];
                 var expansionAsToken = expansion as Token;
 
                 // for lexer rules (terminal nodes), the expansion is a single token
                 // for lexer rules (non terminal nodes), the expansion is a set of identifiers
                 if (expansion instanceof Token) {
                     // Lexer Rule
-                    var expansionValue = expansionAsToken.TokenValue;
+                    var expansionValue = expansionAsToken.tokenValue;
                     if (expansionValue[0] === '"' && expansionValue[expansionValue.length - 1] === '"') {
                         // remove start / ending "
                         expansionValue = expansionValue.substr(1, expansionValue.length - 2);
@@ -88,67 +88,67 @@ export class Parser implements ILoggable {
                         rule,
                         expansionValue
                     );
-                    v.State.ProductionRules.push(pr);
+                    v.state.productionRules.push(pr);
                 }
                 else {
-                    v.State.CurrentRule = rule;
+                    v.state.currentRule = rule;
                     var expansionNode = expansion as Node;
-                    expansionNode.Accept(v);
+                    expansionNode.accept(v);
                 }
             });
 
-        visitor.AddVisitor(
+        visitor.addVisitor(
             "parserSymbolsExpr",
             (v, n) => {
                 // each alternate contains a separate list of tokens.
-                if (Array.isArray(n.Properties["ALTERNATE"])) {
-                    for (let node of n.Properties["ALTERNATE"]) {
-                        (node as Node).Accept(v);
+                if (Array.isArray(n.properties["ALTERNATE"])) {
+                    for (let node of n.properties["ALTERNATE"]) {
+                        (node as Node).accept(v);
                     }
                 }
             });
 
-        visitor.AddVisitor(
+        visitor.addVisitor(
             "parserSymbolExpr",
             (v, n) => {
                 let tokens: string[] = [];
-                if (Array.isArray(n.Properties["SYMBOL"])) {
-                    for (let symbol of n.Properties["SYMBOL"]) {
+                if (Array.isArray(n.properties["SYMBOL"])) {
+                    for (let symbol of n.properties["SYMBOL"]) {
                         var node = symbol as Node;
                         // Unpack components
-                        var aliasList = ("ALIAS" in node.Properties) ? node.Properties["ALIAS"] as Array<object> : null;
+                        var aliasList = ("ALIAS" in node.properties) ? node.properties["ALIAS"] as Array<object> : null;
 
                         // A symbol can be either an identifier or a subrule
                         let identifier: string = "";
-                        if ("IDENTIFIER" in node.Properties) {
+                        if ("IDENTIFIER" in node.properties) {
                             // Identifier
-                            identifier = (node.Properties["IDENTIFIER"] as Token).TokenValue;
-                        } else if ("SUBRULE" in node.Properties) {
+                            identifier = (node.properties["IDENTIFIER"] as Token).tokenValue;
+                        } else if ("SUBRULE" in node.properties) {
                             // for subrules, the subrule is parsed and added as a
                             // new production, and the subrule is replaced with the
                             // autogenerated name of the subrule.
-                            identifier = `anonymous_${v.State.SubRules++}`;
-                            var temp = v.State.CurrentRule;
-                            v.State.CurrentRule = identifier;
-                            var subrule = node.Properties["SUBRULE"] as Node;
-                            subrule.Accept(v);
-                            v.State.CurrentRule = temp;
+                            identifier = `anonymous_${v.state.subRules++}`;
+                            var temp = v.state.currentRule;
+                            v.state.currentRule = identifier;
+                            var subrule = node.properties["SUBRULE"] as Node;
+                            subrule.accept(v);
+                            v.state.currentRule = temp;
                         }
-                        var modifierToken = ("MODIFIER" in node.Properties) ? node.Properties["MODIFIER"] as Token : null;
+                        var modifierToken = ("MODIFIER" in node.properties) ? node.properties["MODIFIER"] as Token : null;
                         var alias = "";
                         if (aliasList != null) {
-                            var elements = aliasList.map(a => (a as Token).TokenValue);
+                            var elements = aliasList.map(a => (a as Token).tokenValue);
                             alias = elements.join("");
                         }
-                        var modifier = (modifierToken != null) ? modifierToken.TokenValue : "";
+                        var modifier = (modifierToken != null) ? modifierToken.tokenValue : "";
                         tokens.push(`${alias}${identifier}${modifier}`);
                     }
 
                     let pr: ProductionRule = new ProductionRule(
-                        v.State.CurrentRule,
+                        v.state.currentRule,
                         ...tokens
                     );
-                    v.State.ProductionRules.push(pr);
+                    v.state.productionRules.push(pr);
                 }
             }
         );
@@ -160,25 +160,25 @@ export class Parser implements ILoggable {
     public constructor(grammar: string, rootProductionRule: string, logHandler: (sender: any, args: LogArgs) => void, ...ignoreTokens: string[]);
     public constructor(grammar: any, rootProductionRule: string, logHandler: (sender: any, args: LogArgs) => void, ...ignoreTokens: string[]) {
 
-        this.LogHandler = logHandler;
-        this.IgnoreTokens = [...ignoreTokens];
-        this.RootProductionRule = rootProductionRule;
+        this.logHandler = logHandler;
+        this.ignoreTokens = [...ignoreTokens];
+        this.rootProductionRule = rootProductionRule;
         if (typeof (grammar) === "string") {
-            let parser: Parser = new Parser(this.BNFGrammar, "grammar", this.LogHandler, "COMMENT", "NEWLINE");
-            var tokens = parser.Tokenise(grammar);
+            let parser: Parser = new Parser(this.bnfGrammar, "grammar", this.logHandler, "COMMENT", "NEWLINE");
+            var tokens = parser.tokenise(grammar);
             if (tokens.length == 0) {
                 throw "Invalid grammar. No production rules found";
             }
-            var ast = parser.Parse(grammar) as Node;
-            this.ProductionRules = parser.Execute(ast, this.BNFVisitor, (d) => d.ProductionRules) as ProductionRule[];
+            var ast = parser.parse(grammar) as Node;
+            this.productionRules = parser.execute(ast, this.bnfVisitor, (d) => d.productionRules) as ProductionRule[];
         } else {
-            this.ProductionRules = grammar;
-            this.IgnoreTokens = [...ignoreTokens];
-            this.RootProductionRule = rootProductionRule;
+            this.productionRules = grammar;
+            this.ignoreTokens = [...ignoreTokens];
+            this.rootProductionRule = rootProductionRule;
         }
     }
 
-    Tokenise(input: string): Token[] {
+    tokenise(input: string): Token[] {
         // If input only whitespace, return with no tokens
         if (!/\S/.test(input)) {
             return [];
@@ -186,51 +186,51 @@ export class Parser implements ILoggable {
 
         // Start at the beginning of the string and
         // recursively identify tokens. First token to match wins
-        for (let rule of this.ProductionRules.filter(p => p.RuleType === RuleType.LexerRule)) {
-            var symbols = rule.Symbols;
+        for (let rule of this.productionRules.filter(p => p.ruleType === RuleType.LexerRule)) {
+            var symbols = rule.symbols;
             if (symbols.length > 1)
                 throw ("Lexer rule can only have 1 symbol");
 
             var symbol = symbols[0];
 
-            if (symbol.IsMatch((input))) {
-                var match = symbol.Match(input);
-                var token: Token = new Token(rule.Name, match.Matched || "");
+            if (symbol.isMatch((input))) {
+                var match = symbol.match(input);
+                var token: Token = new Token(rule.name, match.matched || "");
                 let list: Token[] = [];
-                if (this.IgnoreTokens.indexOf(rule.Name) == -1) {
+                if (this.ignoreTokens.indexOf(rule.name) == -1) {
                     list.push(token);
                 }
-                list.push(...this.Tokenise(match.Remainder || ""));
+                list.push(...this.tokenise(match.remainder || ""));
                 return list;
             }
         }
         throw (`Syntax error near ${input.substr(0, 20)}...`);
     }
 
-    Parse(input: string, throwOnFailure: boolean = true): Node | null {
+    parse(input: string, throwOnFailure: boolean = true): Node | null {
         if (!input)
             return null;
 
-        var tokens = this.Tokenise(input);
+        var tokens = this.tokenise(input);
 
         if (tokens == null || tokens.length == 0)
             throw ("input yields no tokens!");
 
         // find any matching production rules.
-        var rules = this.ProductionRules.filter(p => this.RootProductionRule == null || p.Name.toLowerCase() === this.RootProductionRule.toLowerCase());
+        var rules = this.productionRules.filter(p => this.rootProductionRule == null || p.name.toLowerCase() === this.rootProductionRule.toLowerCase());
         if (rules.length == 0) {
-            throw (`Production rule: ${this.RootProductionRule} not found.`);
+            throw (`Production rule: ${this.rootProductionRule} not found.`);
         }
 
         // try each rule. Use the first rule which succeeds.
         for (let rule of rules) {
-            rule.LogHandler = this.LogHandler;
-            let context: ParserContext = new ParserContext(this.ProductionRules, tokens);
+            rule.logHandler = this.logHandler;
+            let context: ParserContext = new ParserContext(this.productionRules, tokens);
             let obj: Object = {};
             let box: BoxedObject<Object> = new BoxedObject(obj);
-            var ok = rule.Parse(context, box);
-            if (ok && context.TokenEOF) {
-                return box.Inner as Node;
+            var ok = rule.parse(context, box);
+            if (ok && context.tokenEOF) {
+                return box.inner as Node;
             }
         }
 
@@ -241,12 +241,12 @@ export class Parser implements ILoggable {
             return null;
     }
 
-    Execute(node: Node | null, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
+    execute(node: Node | null, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
         if (node == null)
             return null;
 
-        node.Accept(visitors);
-        var state = visitors.State;
+        node.accept(visitors);
+        var state = visitors.state;
         if (resultMapping == null)
             return state;
         else

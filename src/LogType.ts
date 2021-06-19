@@ -1,7 +1,7 @@
 export enum LogType {
-    BEGIN,
-    END,
-    INFORMATION,
-    SUCCESS,
-    FAILURE
+    Begin,
+    End,
+    Information,
+    Success,
+    Failure
 }

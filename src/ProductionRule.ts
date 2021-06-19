@@ -13,45 +13,45 @@ export class ProductionRule implements ILoggable {
     public constructor(name: string, ...symbols: string[]);
     public constructor(name: string, ...symbols: symbol[]);
     public constructor(name: string, ...symbols: Array<any>) {
-        this.Name = name;
-        this.Symbols = [];
+        this.name = name;
+        this.symbols = [];
         symbols.forEach(s => {
             if (typeof (s) === "string") {
-                var symbol = new Symbol(s, this.RuleType);
-                this.Symbols.push(symbol);
+                var symbol = new Symbol(s, this.ruleType);
+                this.symbols.push(symbol);
             } else {
-                this.Symbols.push(s as Symbol);
+                this.symbols.push(s as Symbol);
             }
         });
     }
 
-    Name: string;
+    name: string;
 
-    get IsGenerated(): boolean {
-        return this.Name.includes("'");
+    get isGenerated(): boolean {
+        return this.name.includes("'");
     }
 
-    get OriginalProductionRule(): string {
-        return this.Name.replace("'", "");
+    get originalProductionRule(): string {
+        return this.name.replace("'", "");
     }
 
-    get RuleType(): RuleType {
-        if (this.Name[0] === this.Name[0].toUpperCase()) {
+    get ruleType(): RuleType {
+        if (this.name[0] === this.name[0].toUpperCase()) {
             return RuleType.LexerRule;
         } else {
             return RuleType.ParserRule
         }
     }
 
-    Symbols: Array<Symbol>;
+    symbols: Array<Symbol>;
 
-    LogHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
+    logHandler = (sender: any, args: LogArgs) => { };   // default handler - do nothing
 
-    IsEnumeratedSymbol(alias: string): boolean {
+    isEnumeratedSymbol(alias: string): boolean {
         let isList: boolean = false;
         let found: boolean = false;
 
-        var symbols = this.Symbols.filter(s => s.Alias === alias);
+        var symbols = this.symbols.filter(s => s.alias === alias);
 
         if (symbols.length >= 1) {
             found = true;
@@ -59,71 +59,71 @@ export class ProductionRule implements ILoggable {
                 isList = true;
             else {
                 var symbol = symbols[0];
-                if (symbol.Many)
+                if (symbol.many)
                     isList = true;
             }
         }
 
         if (!found) {
-            throw new Error(`Symbol ${alias} does not exist in production rule ${this.Name}.`);
+            throw new Error(`Symbol ${alias} does not exist in production rule ${this.name}.`);
         }
 
         return isList;
     }
 
-    Parse(context: ParserContext, obj: BoxedObject<object>): boolean {
+    parse(context: ParserContext, obj: BoxedObject<object>): boolean {
 
-        this.LogHandler(this,
+        this.logHandler(this,
             {
-                LogType: LogType.BEGIN,
-                NestingLevel: context.CurrentProductionRule.size(),
-                Message: `${this.Name} - Pushing new result to stack.`
+                logType: LogType.Begin,
+                nestingLevel: context.currentProductionRule.size(),
+                message: `${this.name} - Pushing new result to stack.`
             });
 
-        context.CurrentProductionRule.push(this);
-        context.PushResult(this.GetResultObject());
+        context.currentProductionRule.push(this);
+        context.pushResult(this.getResultObject());
 
-        var temp = context.CurrentTokenIndex;
+        var temp = context.currentTokenIndex;
         let success: boolean = true;
 
         // Rule is non terminal
-        for (let i = 0; i < this.Symbols.length; i++) {
-            let symbol = this.Symbols[i];
-            symbol.LogHandler = this.LogHandler;
-            if (symbol.Optional && context.TokenEOF)
+        for (let i = 0; i < this.symbols.length; i++) {
+            let symbol = this.symbols[i];
+            symbol.logHandler = this.logHandler;
+            if (symbol.optional && context.tokenEOF)
                 continue;
 
-            var ok = symbol.Parse(context);
+            var ok = symbol.parse(context);
 
-            if (symbol.Optional || ok) { }
+            if (symbol.optional || ok) { }
             else {
                 success = false;
                 break;
             }
         }
 
-        obj.Inner = context.PopResult() as Object;
-        context.CurrentProductionRule.pop();
+        obj.inner = context.popResult() as Object;
+        context.currentProductionRule.pop();
 
         if (success) {
-            this.LogHandler(this,
+            this.logHandler(this,
                 {
-                    LogType: LogType.SUCCESS,
-                    NestingLevel: context.CurrentProductionRule.size(),
-                    Message: ""
+                    logType: LogType.Success,
+                    nestingLevel: context.currentProductionRule.size(),
+                    message: ""
                 });
 
             return true;
         }
         else {
-            this.LogHandler(this,
+            this.logHandler(this,
                 {
-                    LogType: LogType.FAILURE,
-                    NestingLevel: context.CurrentProductionRule.size(),
-                    Message: ""
+                    logType: LogType.Failure,
+                    nestingLevel: context.currentProductionRule.size(),
+                    message: ""
                 });
 
-            context.CurrentTokenIndex = temp;
+            context.currentTokenIndex = temp;
             obj = new BoxedObject({});
             return false;
         }
@@ -133,24 +133,24 @@ export class ProductionRule implements ILoggable {
         return self.indexOf(value) === index;
     }
 
-    GetResultObject(): object {
+    getResultObject(): object {
         let hasBlankAlias: boolean = false;
         let hasNonBlankAlias: boolean = false;
         let ret: object | null = null;
 
         // Get all the aliases
-        let aliases: string[] = this.Symbols.map(s => s.Alias);
+        let aliases: string[] = this.symbols.map(s => s.alias);
         let uniqueAliases: string[] = aliases.filter(this.onlyUnique);
         uniqueAliases.forEach(alias => {
             if (alias) {
                 hasNonBlankAlias = true;
 
                 if (ret == null)
-                    ret = new Node(this.Name);
+                    ret = new Node(this.name);
             }
             else {
                 hasNonBlankAlias = false;
-                if (this.IsEnumeratedSymbol(alias)) {
+                if (this.isEnumeratedSymbol(alias)) {
                     ret = [];   //List.create<object>([]);
                 }
             }
@@ -162,7 +162,7 @@ export class ProductionRule implements ILoggable {
     }
 
     public toString(): string {
-        let symbols = this.Symbols.join(", ");
-        return `${this.Name} = ${symbols};`;
+        let symbols = this.symbols.join(", ");
+        return `${this.name} = ${symbols};`;
     }
 }

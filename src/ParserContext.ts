@@ -5,51 +5,51 @@ import { Node } from "./Node"
 import "./Extensions"
 
 export class ParserContext {
-    ProductionRules: ProductionRule[];
-    CurrentProductionRule: Stack<ProductionRule>;
-    Tokens: Token[];
-    Results: Stack<object>;
-    CurrentTokenIndex: number;
+    productionRules: ProductionRule[];
+    currentProductionRule: Stack<ProductionRule>;
+    tokens: Token[];
+    results: Stack<object>;
+    currentTokenIndex: number;
 
     constructor(productionRules: ProductionRule[], tokens: Token[]) {
-        this.ProductionRules = productionRules;
-        this.Tokens = [...tokens];
-        this.CurrentTokenIndex = 0;
-        this.Results = new Stack<object>();
-        this.CurrentProductionRule = new Stack<ProductionRule>();
+        this.productionRules = productionRules;
+        this.tokens = [...tokens];
+        this.currentTokenIndex = 0;
+        this.results = new Stack<object>();
+        this.currentProductionRule = new Stack<ProductionRule>();
     }
 
-    PeekToken(): Token {
-        if (this.CurrentTokenIndex >= this.Tokens.length)
+    peekToken(): Token {
+        if (this.currentTokenIndex >= this.tokens.length)
             return new Token("<EOF>", "<EOF>")
         else
-            return this.Tokens[this.CurrentTokenIndex];
+            return this.tokens[this.currentTokenIndex];
     }
 
-    PushResult(value: object): void {
-        this.Results.push(value);
+    pushResult(value: object): void {
+        this.results.push(value);
     }
 
-    PopResult(): object | undefined {
-        return this.Results.pop();
+    popResult(): object | undefined {
+        return this.results.pop();
     }
 
-    PeekResult(): object | undefined {
-        return this.Results.peek();
+    peekResult(): object | undefined {
+        return this.results.peek();
     }
 
-    get TokenEOF(): boolean {
-        return this.CurrentTokenIndex >= this.Tokens.length;
+    get tokenEOF(): boolean {
+        return this.currentTokenIndex >= this.tokens.length;
     }
 
-    TryToken(tokenName: string): Token | null {
-        if (this.CurrentTokenIndex >= this.Tokens.length) {
+    tryToken(tokenName: string): Token | null {
+        if (this.currentTokenIndex >= this.tokens.length) {
             throw new Error("Unexpected EOF");
         }
 
-        if (tokenName.toLowerCase() === this.Tokens[this.CurrentTokenIndex].TokenName.toLowerCase()) {
-            let token = this.Tokens[this.CurrentTokenIndex];
-            this.CurrentTokenIndex++;
+        if (tokenName.toLowerCase() === this.tokens[this.currentTokenIndex].tokenName.toLowerCase()) {
+            let token = this.tokens[this.currentTokenIndex];
+            this.currentTokenIndex++;
             return token;
         }
         else {
@@ -57,32 +57,32 @@ export class ParserContext {
         }
     }
 
-    UpdateResult(name: string, value: object): void {
+    updateResult(name: string, value: object): void {
         if (value !== null) {
-            var result = this.Results.peek();
+            var result = this.results.peek();
             var resultAsNode = result as Node;
 
-            var productionRule = this.CurrentProductionRule.peek() as ProductionRule;
-            var isEnumerated = productionRule.IsEnumeratedSymbol(name);
+            var productionRule = this.currentProductionRule.peek() as ProductionRule;
+            var isEnumerated = productionRule.isEnumeratedSymbol(name);
 
             if (name) {
                 if (isEnumerated) {
-                    if (!(name in resultAsNode.Properties))
-                        resultAsNode.Properties[name] = new Array<object>();
+                    if (!(name in resultAsNode.properties))
+                        resultAsNode.properties[name] = new Array<object>();
 
-                    resultAsNode.Properties[name] = resultAsNode.Properties[name].union(value);
+                    resultAsNode.properties[name] = resultAsNode.properties[name].union(value);
                 }
                 else
-                    resultAsNode.Properties[name] = value;
+                    resultAsNode.properties[name] = value;
             }
             else {
                 if (isEnumerated) {
-                    var obj = this.Results.pop() as Object;
-                    this.Results.push(obj.union(value));
+                    var obj = this.results.pop() as Object;
+                    this.results.push(obj.union(value));
                 }
                 else {
-                    this.Results.pop();
-                    this.Results.push(value);
+                    this.results.pop();
+                    this.results.push(value);
                 }
             }
         }

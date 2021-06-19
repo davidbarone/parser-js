@@ -1,7 +1,7 @@
 import { LogType } from "./LogType";
 
 export class LogArgs {
-    NestingLevel: number = 0;
-    Message: string = ""
-    LogType: LogType = LogType.INFORMATION;
+    nestingLevel: number = 0;
+    message: string = ""
+    logType: LogType = LogType.Information;
 }

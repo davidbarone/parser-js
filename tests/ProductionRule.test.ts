@@ -5,6 +5,7 @@ import { ProductionRule } from "../src/ProductionRule"
 function escapeSlash(input: string): string {
     return input.replace('\\', '\\\\');
 }
+
 describe("Invalid production rule tests", () => {
 
     test.each([
@@ -15,6 +16,7 @@ describe("Invalid production rule tests", () => {
         let fn = () => { TestHarness.doTest(a, b) };
         expect(fn).toThrow("Invalid grammar. No production rules found");
     });
+
 });
 
 describe("Valid production rule tests", () => {
@@ -49,4 +51,5 @@ describe("Valid production rule tests", () => {
         let rules = TestHarness.buildGrammar(description, grammar);
         expect(rules).toBe(expectedProductionRuleCount);
     });
+
 });

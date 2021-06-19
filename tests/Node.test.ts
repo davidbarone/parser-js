@@ -1,7 +1,7 @@
 import { Parser } from "../src/Parser";
 import { Node } from "../src/Node";
 
-const SubruleGrammar = () => `
+const subruleGrammar = () => `
  NUMBER_LITERAL  = "\\d+";
  PLUS_OP         = "\\+";
  MINUS_OP        = "\\-";
@@ -31,14 +31,12 @@ describe("Pretty Print test", () => {
 `;
 
     let input = "9+5";
-    let parser: Parser = new Parser(SubruleGrammar(), "expression", () => { });
-    let ast: Node | null = parser.Parse(input, true);
+    let parser: Parser = new Parser(subruleGrammar(), "expression", () => { });
+    let ast: Node | null = parser.parse(input, true);
     let actual: string = "";
     if (ast !== null) {
         actual = ast.prettyPrint();
     }
-    console.log(actual);
-    console.log(expected);
     test("prettyprint test", () => {
         expect(actual).toEqual(expected);
     })

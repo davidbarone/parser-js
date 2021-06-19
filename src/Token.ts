@@ -1,9 +1,9 @@
 export class Token {
-    TokenName: string = "";
-    TokenValue: string = "";
+    tokenName: string = "";
+    tokenValue: string = "";
 
     constructor(tokenName: string, tokenValue: string) {
-        this.TokenName = tokenName;
-        this.TokenValue = tokenValue;
+        this.tokenName = tokenName;
+        this.tokenValue = tokenValue;
     }
 }

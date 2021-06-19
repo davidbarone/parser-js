@@ -12,7 +12,7 @@ export class TestHarness {
         rootProductionRule: string = ""
     ): number {
         let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
-        let rules: ProductionRule[] = parser.ProductionRules;
+        let rules: ProductionRule[] = parser.productionRules;
         return rules.length;
     }
 
@@ -25,12 +25,12 @@ export class TestHarness {
         resultMapping: ((result: any) => any) = (r) => r
     ): object | null {
         let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
-        let rules: ProductionRule[] = parser.ProductionRules;
+        let rules: ProductionRule[] = parser.productionRules;
 
         if (input) {
-            let ast: Node | null = parser.Parse(input, true);
+            let ast: Node | null = parser.parse(input, true);
             if (visitor !== null) {
-                let actual = parser.Execute(ast, visitor, resultMapping);
+                let actual = parser.execute(ast, visitor, resultMapping);
                 return actual;
             }
         }
