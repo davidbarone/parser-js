@@ -22,7 +22,7 @@ export class TestHarness {
         input: string = "",
         rootProductionRule: string = "",
         visitor: Visitor = new Visitor(null),
-        resultMapping: ((result: any) => any) = (r) => r
+        stateMapping: ((state: any) => any) = (r) => r
     ): object | null {
         let parser: Parser = new Parser(grammar, rootProductionRule, (sender: any, args: LogArgs): void => { });
         let rules: ProductionRule[] = parser.productionRules;
@@ -30,7 +30,8 @@ export class TestHarness {
         if (input) {
             let ast: Node = parser.parse(input);
             if (visitor !== null) {
-                let actual = parser.execute(ast, visitor, resultMapping);
+                ast.walk(visitor);
+                let actual = stateMapping(visitor.state);
                 return actual;
             }
         }

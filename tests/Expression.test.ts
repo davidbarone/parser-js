@@ -4,7 +4,8 @@ import { Node } from "../src/Node";
 import { Token } from "../src/Token";
 import { TestHarness } from "./TestHarness";
 
-const expressionGrammar = () => `
+const expressionGrammar = () => {
+    return `
 
 NUMBER_LITERAL  = "\\d+";
 PLUS_OP         = "\\+";
@@ -21,7 +22,7 @@ term            = mul_div_term | factor;
 mul_div_term    = FACTORS:factor, FACTORS:mul_div_term_*;
 mul_div_term_   = OP:DIV_OP, factor | OP:MUL_OP, factor;
 factor          = primary | PLUS_OP, primary | MINUS_OP, primary;
-primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;`;
+primary         = NUMBER_LITERAL | LPAREN!, expression, RPAREN!;`};
 
 const expressionVisitor = () => {
 
@@ -140,31 +141,31 @@ const expressionVisitor = () => {
     return visitor;
 }
 
-let resultMapper = (d: any) => (d.stack as Stack<number>).pop();
+let stateMapper = (state: any) => (state.stack as Stack<number>).pop();
 
 describe("Expression tests", () => {
     test.each(
         [
-            ["EXPR_1", expressionGrammar(), "4", "expression", expressionVisitor(), resultMapper, 4],
-            ["EXPR_2", expressionGrammar(), "-4", "expression", expressionVisitor(), resultMapper, -4],
-            ["EXPR_3", expressionGrammar(), "9+9", "expression", expressionVisitor(), resultMapper, 18],
-            ["EXPR_4", expressionGrammar(), "1+2+3+4", "expression", expressionVisitor(), resultMapper, 10],
-            ["EXPR_5", expressionGrammar(), "2*3", "expression", expressionVisitor(), resultMapper, 6],
-            ["EXPR_6", expressionGrammar(), "1+2*3", "expression", expressionVisitor(), resultMapper, 7],
-            ["EXPR_7", expressionGrammar(), "(1+2)*3", "expression", expressionVisitor(), resultMapper, 9],
-            ["EXPR_8", expressionGrammar(), "2*-3", "expression", expressionVisitor(), resultMapper, -6],
-            ["EXPR_9", expressionGrammar(), "-2*-3", "expression", expressionVisitor(), resultMapper, 6],
-            ["EXPR_10", expressionGrammar(), "3*4+5*6", "expression", expressionVisitor(), resultMapper, 42],
-            ["EXPR_11", expressionGrammar(), "7-4", "expression", expressionVisitor(), resultMapper, 3],
-            ["EXPR_12", expressionGrammar(), "10-3+2", "expression", expressionVisitor(), resultMapper, 9],
-            ["EXPR_13", expressionGrammar(), "10-2*3+4*5", "expression", expressionVisitor(), resultMapper, 24],
-            ["EXPR_14", expressionGrammar(), "10--2*3+4*5", "expression", expressionVisitor(), resultMapper, 36],
-            ["EXPR_15", expressionGrammar(), "10+8/2-2*5", "expression", expressionVisitor(), resultMapper, 4],
-            ["EXPR_16", expressionGrammar(), "((((1+7)/(3-1))/2)*(5+2)+(-7+15)-(-2*-4))", "expression", expressionVisitor(), resultMapper, 14],
-            ["EXPR_17", expressionGrammar(), "6*2/3", "expression", expressionVisitor(), resultMapper, 4]
+            ["EXPR_1", expressionGrammar(), "4", "expression", expressionVisitor(), stateMapper, 4],
+            ["EXPR_2", expressionGrammar(), "-4", "expression", expressionVisitor(), stateMapper, -4],
+            ["EXPR_3", expressionGrammar(), "9+9", "expression", expressionVisitor(), stateMapper, 18],
+            ["EXPR_4", expressionGrammar(), "1+2+3+4", "expression", expressionVisitor(), stateMapper, 10],
+            ["EXPR_5", expressionGrammar(), "2*3", "expression", expressionVisitor(), stateMapper, 6],
+            ["EXPR_6", expressionGrammar(), "1+2*3", "expression", expressionVisitor(), stateMapper, 7],
+            ["EXPR_7", expressionGrammar(), "(1+2)*3", "expression", expressionVisitor(), stateMapper, 9],
+            ["EXPR_8", expressionGrammar(), "2*-3", "expression", expressionVisitor(), stateMapper, -6],
+            ["EXPR_9", expressionGrammar(), "-2*-3", "expression", expressionVisitor(), stateMapper, 6],
+            ["EXPR_10", expressionGrammar(), "3*4+5*6", "expression", expressionVisitor(), stateMapper, 42],
+            ["EXPR_11", expressionGrammar(), "7-4", "expression", expressionVisitor(), stateMapper, 3],
+            ["EXPR_12", expressionGrammar(), "10-3+2", "expression", expressionVisitor(), stateMapper, 9],
+            ["EXPR_13", expressionGrammar(), "10-2*3+4*5", "expression", expressionVisitor(), stateMapper, 24],
+            ["EXPR_14", expressionGrammar(), "10--2*3+4*5", "expression", expressionVisitor(), stateMapper, 36],
+            ["EXPR_15", expressionGrammar(), "10+8/2-2*5", "expression", expressionVisitor(), stateMapper, 4],
+            ["EXPR_16", expressionGrammar(), "((((1+7)/(3-1))/2)*(5+2)+(-7+15)-(-2*-4))", "expression", expressionVisitor(), stateMapper, 14],
+            ["EXPR_17", expressionGrammar(), "6*2/3", "expression", expressionVisitor(), stateMapper, 4]
         ]
-    )('%s', (name, grammar, input, rootProductionRule, visitor, resultMapping, expectedResult) => {
-        var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, resultMapping);
+    )('%s', (name, grammar, input, rootProductionRule, visitor, stateMapper, expectedResult) => {
+        var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, stateMapper);
         expect(result).toEqual(expectedResult);
     });
 });

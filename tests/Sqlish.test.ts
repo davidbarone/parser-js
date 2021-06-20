@@ -23,8 +23,8 @@ let data = [
     { name: 'paul', age: 49, country: 'USA', sex: 'M', rating: "C" },
 ];
 
-let sqlishGrammar: string = `
-
+let sqlishGrammar = () => {
+    return `
 /* Lexer Rules */
 
 AND             = "\\bAND\\b";
@@ -65,7 +65,7 @@ boolean_factor      =   AND!, :boolean_primary;
 boolean_term        =   AND:boolean_primary, AND:boolean_factor*;
 search_factor       =   OR!, :boolean_term;
 search_condition    =   OR:boolean_term, OR:search_factor*;
-`
+`};
 
 const sqlishVisitor = () => {
 
@@ -237,7 +237,7 @@ const sqlishVisitor = () => {
     return visitor;
 };
 
-let resultMapper = (state: any) => {
+let stateMapper = (state: any) => {
     let func = state.filterFunctions.pop();
     let filtered = data.filter(func);
     return filtered.length;
@@ -245,24 +245,24 @@ let resultMapper = (state: any) => {
 
 let expectedProductionRules: number = 46;   // above grammar should produce 46 production rules
 test("Check grammar built OK", () => {
-    expect(TestHarness.buildGrammar("Test", sqlishGrammar)).toEqual(expectedProductionRules);
+    expect(TestHarness.buildGrammar("Test", sqlishGrammar())).toEqual(expectedProductionRules);
 })
 
 describe("Sqlish data tests", () => {
 
     test.each(
         [
-            ["SQLISH_1", sqlishGrammar, "age BETWEEN 40 AND 60", "search_condition", sqlishVisitor(), resultMapper, 6],
-            ["SQLISH_2", sqlishGrammar, "age EQ 26", "search_condition", sqlishVisitor(), resultMapper, 1],
-            ["SQLISH_3", sqlishGrammar, "rating ISBLANK", "search_condition", sqlishVisitor(), resultMapper, 1],
-            ["SQLISH_4", sqlishGrammar, "sex EQ 'F'", "search_condition", sqlishVisitor(), resultMapper, 7],
-            ["SQLISH_5", sqlishGrammar, "name CONTAINS 's'", "search_condition", sqlishVisitor(), resultMapper, 2],
-            ["SQLISH_6", sqlishGrammar, "name NOT CONTAINS 's'", "search_condition", sqlishVisitor(), resultMapper, 14],
-            ["SQLISH_7", sqlishGrammar, "country EQ 'UK' OR name EQ 'david'", "search_condition", sqlishVisitor(), resultMapper, 4],
-            ["SQLISH_8", sqlishGrammar, "(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')", "search_condition", sqlishVisitor(), resultMapper, 3],
+            ["SQLISH_1", sqlishGrammar(), "age BETWEEN 40 AND 60", "search_condition", sqlishVisitor(), stateMapper, 6],
+            ["SQLISH_2", sqlishGrammar(), "age EQ 26", "search_condition", sqlishVisitor(), stateMapper, 1],
+            ["SQLISH_3", sqlishGrammar(), "rating ISBLANK", "search_condition", sqlishVisitor(), stateMapper, 1],
+            ["SQLISH_4", sqlishGrammar(), "sex EQ 'F'", "search_condition", sqlishVisitor(), stateMapper, 7],
+            ["SQLISH_5", sqlishGrammar(), "name CONTAINS 's'", "search_condition", sqlishVisitor(), stateMapper, 2],
+            ["SQLISH_6", sqlishGrammar(), "name NOT CONTAINS 's'", "search_condition", sqlishVisitor(), stateMapper, 14],
+            ["SQLISH_7", sqlishGrammar(), "country EQ 'UK' OR name EQ 'david'", "search_condition", sqlishVisitor(), stateMapper, 4],
+            ["SQLISH_8", sqlishGrammar(), "(country EQ 'UK' AND sex EQ 'F') OR (country EQ 'Italy')", "search_condition", sqlishVisitor(), stateMapper, 3],
         ]
-    )('%s', (name, grammar, input, rootProductionRule, visitor, resultMapping, expectedResult) => {
-        var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, resultMapping);
+    )('%s', (name, grammar, input, rootProductionRule, visitor, stateMapper, expectedResult) => {
+        var result = TestHarness.doTest(name, grammar, input, rootProductionRule, visitor, stateMapper);
         expect(result).toEqual(expectedResult);
     });
 

@@ -1,5 +1,5 @@
 # @dbarone/parser
-A Javascript version of [a simple C# lexer and parser](https://github.com/davidbarone/parser). The source code for this JavaScript version is available from https://github.com/davidbarone/parser-js. The npm package can be accessed from: https://www.npmjs.com/package/@dbarone/parser.
+A parser generator that can generate LL(1) parsers. The source code for this project is available from https://github.com/davidbarone/parser-js. The npm package can be accessed from: https://www.npmjs.com/package/@dbarone/parser.
 
 ## Getting Started
 Download the package from the npm repository via the CLI:
@@ -11,7 +11,7 @@ npm install @dbarone/parser
 Then, add the following into your script:
 
 ``` javascript
-let { Parser } = require("@dbarone/parser");
+let { Parser, Visitor } = require("@dbarone/parser");
 
 const fooBarBazGrammar = () => {
   return `
@@ -37,8 +37,12 @@ const fooBarBazVisitor = () => {
 };
 
 let parser = new Parser(fooBarBazGrammar(), "fbb", (sender, args) => {});
-let node = parser.parse("FOOBARBARBARBAZ");
-console.log(node.prettyPrint());
+let ast = parser.parse("FOOBARBARBARBAZ");
+console.log(ast.prettyPrint());
+
+let visitor = fooBarBazVisitor();
+ast.walk(visitor);
+console.log(`Number of FooBarBaz tokens found = ${visitor.state.items.length}`);
 ```
 
 Run the script:
@@ -47,7 +51,7 @@ Run the script:
 node ./src/index.js
 ```
 
-You should see a simple abstract syntax tree generated in the console:
+You should see a simple abstract syntax tree generated in the console, and the result of processing the tree:
 
 ```
 +- fbb
@@ -56,21 +60,23 @@ You should see a simple abstract syntax tree generated in the console:
    +- "ITEMS" BAR [BAR]
    +- "ITEMS" BAR [BAR]
    +- "ITEMS" BAZ [BAZ]
+
+Number of FooBarBaz tokens found = 5
 ```
 
-If you've got this, then congratulations, you've created your first parser. Read on to find out how to can use this package to create parsers for all kinds of languages and DSLs.
+If you've got this, then congratulations, you've created your first parser! Read on to find out how to can use this package to create parsers for all kinds of languages and DSLs.
 
 ## Summary
 This is a parser generator that can generate LL(1) parsers, i.e. left-recursion, leftmost derivation parsers with single token lookahead. The generated parsers work in a brute-force fashion, with backtracking, and will parse context-free grammars. It is a very simplistic parser generator, and is intended for generating simple grammars or domain-specific languages (DSLs). The following services are provided:
 - Lexically analyse the input into a series of tokens (tokenising)
 - Parse the tokens into an abstract syntax tree (parsing)
-- Navigating through the abstract syntax tree, using a visitor class
+- Navigating through the abstract syntax tree, using a visitor class (walking the abstract syntax tree)
 
-The target use case for this parser generator is for processing inputs that are slightly too complex for regular expressions alone, and where the user does not want the overhead of an industrial strength or commercial parser toolkit. The benefits of this parser generator are:
+The target use case for this parser generator is for processing inputs that are slightly too complex for regular expressions alone, and where the user does not want the overhead of an industrial strength or commercial parser generator toolkit. The benefits of this parser generator are:
 - Extremely small / simple to understand
 - Does not require any build-time code generation tasks.
 
-Grammars are specified using a very friendly BNF-ish syntax which will be familiar to users of other parser toolkits. The `Parser` class provides the main functionality, and includes `tokenise()`, `parse()`, and `execute()` methods.
+Grammars are specified using a very friendly BNF-ish syntax which will be familiar to users of other parser toolkits. The `Parser` class provides the main functionality, and includes `tokenise` and `parse` methods. An abstract syntax tree is represented by the `Node` class, which also contains a `walk` method to navigate the abstract syntax tree.
 
 For processing the input (through an abstract syntax tree), a special `Visitor` class is provided. Hooks into different parts of the tree can be easily coded by creating visitor handlers (again, all this can be done directly from your code without any pre-processing code generation steps).
 
@@ -222,7 +228,7 @@ primary         = NUMBER_LITERAL | LPAREN, expression, RPAREN;";
 On the downside, subrules get automatically generated in the grammar, and cannot be easily referenced in the abstract syntax tree. When rules are explicitly defined in the grammar, the rule names become the names of the nodes in the abstract syntax tree, and these same names are used by the visitor to match appropriate nodes. Subrules cannot be easily matched by the visitor. In general it is not recommended to make deeply nested subrules. Subrules should be used only for simple inline expansions.
 
 ## Tokeniser
-The tokeniser uses regex expressions as rules. Any valid C# regex can be used. Note that every string token in your input must be defined as a lexer rule. There is no support for literal tokens defined in parser rules. All parser rules must reference either other parser rules, or lexer rules.
+The tokeniser uses regex expressions as rules. Any valid JavaScript regular expression can be used. Note that every string token in your input must be defined as a lexer rule. There is no support for literal tokens defined in parser rules. All parser rules must reference either other parser rules, or lexer rules.
 
 ## Tree Generation and Rule Modifiers
 The result of the `Parser.parse()` method is an abstract syntax tree. The structure of the tree is designed to be close to the grammar. for example, given a grammar:
@@ -416,7 +422,7 @@ Additionally, the alias modification rules mean that C & B can be 'aliased' in t
 The abstract syntax tree structure uses `Node` objects to represent non-terminal nodes, and `Token` objects to represent terminal nodes. Each `Node` object has a properties collection. This properties collection contains all the child symbols gathered during parsing. The property names are the node names, or the aliases (if specified). The properties collection create the tree structure. The properties collection can contain `Node` objects, `Token` objects, or lists of them.
 
 ## Processing a Tree Using the Visitor Class
-A `Visitor` class is included which allows for an abstract syntax tree to be processed. A new visitor is created using:
+A `Visitor` class is included which allows for an abstract syntax tree to be processed. A new visitor implementation is created using:
 
 `let visitor = new Visitor(initialState)`
 
@@ -436,7 +442,7 @@ Visitors do not need to be written for every rule / node type. By default if no 
 ## Debugging
 The `Parser` class exposes a property `logHandler` which if specified, enables the caller to output logging information related to the parsing algorithm.
 
-Additionally, a pretty-print extension method is available to display the abstract syntax tree in a user-friendly format. The tree can be displayed for any root node by calling:
+Additionally, a pretty-print extension method is available to display the abstract syntax tree in a user-friendly format. The tree can be displayed for any node by calling:
 
 `node.prettyPrint();`
 

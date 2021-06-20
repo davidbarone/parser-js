@@ -170,7 +170,9 @@ export class Parser implements ILoggable {
                 throw "Invalid grammar. No production rules found";
             }
             var ast = parser.parse(grammar) as Node;
-            this.productionRules = parser.execute(ast, this.bnfVisitor, (d) => d.productionRules) as ProductionRule[];
+            let visitor = this.bnfVisitor;
+            ast.walk(visitor);
+            this.productionRules = visitor.state.productionRules as ProductionRule[];
         } else {
             this.productionRules = grammar;
             this.ignoreTokens = [...ignoreTokens];
@@ -236,16 +238,5 @@ export class Parser implements ILoggable {
 
         // should not get here...
         throw "Input cannot be parsed.";
-    }
-
-    execute(node: Node, visitors: Visitor, resultMapping: (result: any) => any = (state) => state): any {
-
-        node.accept(visitors);
-        var state = visitors.state;
-        if (resultMapping == null)
-            return state;
-        else
-            return resultMapping(state);
-
     }
 }

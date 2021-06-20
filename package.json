@@ -1,20 +1,18 @@
 {
   "name": "@dbarone/parser",
   "version": "0.1.2",
-  "description": "A simple JavaScript parser",
-  "main": "dist/Parser.js",
-  "types": "dist/Parser.d.ts",
+  "description": "A parser generator that can generate LL(1) parsers.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "webpack --mode production",
-    "build-dev": "webpack --config webpack.config.development.js",
     "compile": "tsc",
-    "compile-dev": "tsc --p tsconfig.development.json",
     "test": "jest --collectCoverage",
     "start": "node ./dist/index.js",
-    "prestart": "tsc --p tsconfig.development.json"
+    "prestart": "tsc"
   },
   "repository": {
     "type": "git",

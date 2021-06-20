@@ -15,6 +15,11 @@ export class Node {
         v.visit(this);
     }
 
+    walk(visitors: Visitor): void {
+        this.accept(visitors);
+        var state = visitors.state;
+    }
+
     prettyPrint(indent: string = "", isLastChild: boolean = true): string {
         let output: string = indent + `+- ${this.name}\n`;
         indent += isLastChild ? "   " : "|  ";
